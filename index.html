@@ -197,6 +197,18 @@ input, select, textarea { font-family: inherit; }
 /* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+/* ===== TOGGLE BUTTONS ===== */
+.toggle-row { display:flex; gap:0; margin-bottom:4px; border-radius:10px; overflow:hidden; border:1px solid #ddd; }
+.toggle-btn { flex:1; padding:11px; background:#f8f8f8; border:none; font-size:14px; font-weight:600; color:#888; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+.toggle-btn.active { background:#EB0A1E; color:#fff; }
+.toggle-btn:first-child { border-radius:9px 0 0 9px; }
+.toggle-btn:last-child { border-radius:0 9px 9px 0; }
+
+/* ===== TOGGLE BUTTONS ===== */
+.toggle-row { display:flex; gap:0; margin-bottom:4px; border-radius:10px; overflow:hidden; border:1px solid #ddd; }
+.toggle-btn { flex:1; padding:11px; background:#f8f8f8; border:none; font-size:14px; font-weight:600; color:#888; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+.toggle-btn.active { background:#EB0A1E; color:#fff; }
 </style>
 </head>
 <body>
@@ -216,7 +228,6 @@ input, select, textarea { font-family: inherit; }
         <div class="pin-pad" id="pin-pad"></div>
         <div class="login-error" id="login-error"></div>
       </div>
-      <div class="login-manager-link" onclick="showManagerLogin()">Manager Login →</div>
     </div>
   </div>
   <div id="screen-home" class="screen">
@@ -231,7 +242,7 @@ input, select, textarea { font-family: inherit; }
     </div>
     <div class="screen-body">
       <div class="hero-card">
-        <div class="hero-greeting" id="hero-greeting">Good morning</div>
+        <div class="hero-greeting" id="hero-greeting">Good morning,</div>
         <div class="hero-name" id="hero-name">Executive</div>
         <div class="hero-stats">
           <div class="hstat"><div class="hstat-v" id="hs-total">0</div><div class="hstat-l">My Quotes</div></div>
@@ -242,16 +253,28 @@ input, select, textarea { font-family: inherit; }
         </div>
       </div>
       <button class="new-quote-btn" onclick="goTo('form')">+ New Quotation</button>
-      <div class="section-label">RECENT QUOTES</div>
+      <div class="section-label">MY QUOTES</div>
       <div class="search-wrap">
-        <input type="search" id="home-search" class="search-input" placeholder="Search customer, model, phone..." oninput="renderHomeQuotes()" />
+        <input type="search" id="home-search" class="search-input" placeholder="Search customer, model, suffix..." oninput="renderHomeQuotes()" />
       </div>
       <div id="home-quote-list"></div>
     </div>
   </div>
+  <div id="screen-dashboard" class="screen">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title">Dashboard</div>
+        <div class="topbar-sub" id="dash-role-label"></div>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" onclick="logout()">⎋</button>
+      </div>
+    </div>
+    <div class="screen-body" id="dashboard-body"></div>
+  </div>
   <div id="screen-form" class="screen">
     <div class="topbar">
-      <button class="back-btn" onclick="goTo('home')">‹</button>
+      <button class="back-btn" onclick="currentUser&&[ROLE.OWNER,ROLE.GM,ROLE.SM,ROLE.TL].includes(currentUser.role)?goTo('dashboard'):goTo('home')">‹</button>
       <div class="topbar-title">New Quotation</div>
       <div style="width:36px"></div>
     </div>
@@ -259,515 +282,780 @@ input, select, textarea { font-family: inherit; }
   </div>
   <div id="screen-preview" class="screen">
     <div class="topbar no-print">
-      <button class="back-btn" onclick="goTo('home')">‹</button>
+      <button class="back-btn" onclick="currentUser&&[ROLE.OWNER,ROLE.GM,ROLE.SM,ROLE.TL].includes(currentUser.role)?goTo('dashboard'):goTo('home')">‹</button>
       <div class="topbar-title" id="preview-title">Quotation</div>
-      <button class="icon-btn red" onclick="goTo('form')" title="New">+</button>
+      <button class="icon-btn" onclick="initFormState();goTo('form')" style="color:#EB0A1E;font-size:22px;font-weight:700">+</button>
     </div>
     <div class="screen-body" id="preview-body"></div>
   </div>
-  <div id="screen-manager" class="screen">
+  <div id="screen-manpower" class="screen">
     <div class="topbar">
-      <button class="back-btn" onclick="logout()">‹</button>
-      <div class="topbar-title">Manager Dashboard</div>
+      <button class="back-btn" onclick="goTo('dashboard')">‹</button>
+      <div class="topbar-title">Manage Staff & PINs</div>
       <div style="width:36px"></div>
     </div>
-    <div class="screen-body" id="manager-body"></div>
+    <div class="screen-body" id="manpower-body"></div>
   </div>
 </div>
 <div id="sync-toast" class="sync-toast"></div>
 <script>
 // ============================================================
-// PLANET TOYOTA QMS — DATA CONFIGURATION
-// Edit this file to update models, executives, prices, etc.
+// PLANET TOYOTA QMS — DATA CONFIGURATION v4.0
 // ============================================================
 
-const MODELS = [
-  { name: "Fortuner", variants: ["2.7 Petrol MT 4x2","2.7 Petrol AT 4x2","2.8 Diesel MT 4x4","2.8 Diesel AT 4x4","Legender 4x2 AT","Legender 4x4 AT"] },
-  { name: "Innova HyCross", variants: ["G MT","G Plus MT","VX MT","VX Plus AT","ZX AT","ZX Plus AT"] },
-  { name: "Innova Crysta", variants: ["G MT 7S","G AT 7S","VX MT 7S","VX AT 7S","ZX AT 7S"] },
-  { name: "Urban Cruiser Taisor", variants: ["E MT","S MT","G MT","V MT","V AT","S Plus MT","G Plus MT","V Plus AT"] },
-  { name: "Hyryder", variants: ["E MT","S MT","G MT","V MT","S AT","G AT","V AT","S Hybrid","G Hybrid","V Hybrid"] },
-  { name: "Glanza", variants: ["E MT","S MT","G MT","V MT","S AT","G AT","V AT"] },
-  { name: "Camry", variants: ["Hybrid AT"] },
-  { name: "Vellfire", variants: ["2.5 Hybrid AT"] },
-  { name: "Hilux", variants: ["Standard 4x4 MT","High 4x4 AT"] },
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbyd-O_gsTFlHYKIEvSQrv4dEfNhPSkHIk79U7ZnIo4VnHyV0tx2xpVDqcmj1Q5OPmE/exec";
+const APP_BASE_URL = "https://planettoyota.github.io/planet-toyota-qms";
+
+// Roles
+const ROLE = { EXEC:"Executive", TL:"Team Leader", SM:"Sales Manager", GM:"GM Sales", OWNER:"Owner" };
+
+// Staff structure — stored in localStorage so Owner/GM can manage it
+// This is the DEFAULT structure loaded on first run only
+const DEFAULT_STAFF = [
+  // Owner
+  { id:"u01", name:"Piyush (Owner)",    role:ROLE.OWNER, pin:"6022", teamId:null },
+  // GM Sales
+  { id:"u02", name:"Vikas Kumar",       role:ROLE.GM,    pin:"9090", teamId:null },
+  // Sales Manager
+  { id:"u03", name:"Nilesh Kumar",      role:ROLE.SM,    pin:"1331", teamId:null },
+  // Team Leaders
+  { id:"u04", name:"Ashok Yadav",       role:ROLE.TL,    pin:"9999", teamId:"T1" },
+  { id:"u05", name:"Pritam Yadav",      role:ROLE.TL,    pin:"2222", teamId:"T2" },
+  // Team 1 Executives
+  { id:"u06", name:"Surender Kumar",    role:ROLE.EXEC,  pin:"6699", teamId:"T1" },
+  { id:"u07", name:"Nitin Kumar",       role:ROLE.EXEC,  pin:"7799", teamId:"T1" },
+  { id:"u08", name:"Amit Kumar",        role:ROLE.EXEC,  pin:"8899", teamId:"T1" },
+  // Team 2 Executives
+  { id:"u09", name:"Bishan Saini",      role:ROLE.EXEC,  pin:"5522", teamId:"T2" },
+  { id:"u10", name:"Vikas Kumar",       role:ROLE.EXEC,  pin:"4422", teamId:"T2" },
+  { id:"u11", name:"Navneet Singh",     role:ROLE.EXEC,  pin:"3322", teamId:"T2" },
 ];
 
-const COLORS = [
-  "White Pearl Crystal Shine","Platinum White Pearl","Attitude Black Mica",
-  "Sparkling Black Pearl Crystal Shine","Silver Metallic","Avant-Garde Bronze Metallic",
-  "Burning Red","Midnight Black","Celestial Blue","Emotional Red","Silky Gold Mica","Super White",
+const STAFF_KEY = "pt_staff_v1";
+
+function loadStaff() {
+  try {
+    const s = localStorage.getItem(STAFF_KEY);
+    if (s) return JSON.parse(s);
+  } catch {}
+  // First run — save defaults
+  localStorage.setItem(STAFF_KEY, JSON.stringify(DEFAULT_STAFF));
+  return DEFAULT_STAFF;
+}
+function saveStaff(staff) {
+  localStorage.setItem(STAFF_KEY, JSON.stringify(staff));
+}
+function getStaff() { return loadStaff(); }
+
+// Who can manage staff
+function canManageStaff(role) { return role === ROLE.OWNER || role === ROLE.GM; }
+
+// What quotes can this user see
+function getVisibleQuotes(user, allQuotes) {
+  if ([ROLE.OWNER, ROLE.GM, ROLE.SM].includes(user.role)) return allQuotes;
+  if (user.role === ROLE.TL) {
+    const staff = getStaff();
+    const myExecs = staff.filter(s => s.teamId === user.teamId && s.role === ROLE.EXEC).map(s=>s.name);
+    myExecs.push(user.name);
+    return allQuotes.filter(q => myExecs.includes(q.exec));
+  }
+  return allQuotes.filter(q => q.exec === user.name);
+}
+
+// Models
+const MODEL_LIST = [
+  "Toyota Glanza","Toyota Urban Cruiser Taisor","Toyota Rumion",
+  "Toyota Urban Cruiser Hyryder","Toyota Innova HyCross","Toyota Innova Crysta",
+  "Toyota Fortuner","Toyota Fortuner Legender","Toyota Hilux",
+  "Toyota Camry","Toyota Vellfire","Toyota Urban Cruiser Ebella","Toyota Land Cruiser 300",
 ];
 
-const ACCESSORIES = [
-  { name: "Body Cover", price: 1500 },
-  { name: "Floor Mats (Rubber)", price: 2500 },
-  { name: "Floor Mats (3D Premium)", price: 4500 },
-  { name: "Seat Covers (Fabric)", price: 6500 },
-  { name: "Seat Covers (Leatherette)", price: 12000 },
-  { name: "Mud Flaps Set", price: 1200 },
-  { name: "Door Edge Guards", price: 800 },
-  { name: "Door Visors", price: 2200 },
-  { name: "Reverse Parking Sensors", price: 4500 },
-  { name: "Reverse Camera", price: 5500 },
-  { name: "Dashcam (Front)", price: 4500 },
-  { name: "Dashcam (Front + Rear)", price: 7000 },
-  { name: "Alloy Wheels (Set of 4)", price: 35000 },
-  { name: "Roof Carrier", price: 8000 },
-  { name: "Side Steps / Running Board", price: 12000 },
-  { name: "Chrome Door Handles", price: 2800 },
-  { name: "Steering Cover", price: 900 },
-  { name: "Sun Shades (Set)", price: 1800 },
+const EPC_MODELS = ["Toyota Innova Crysta","Toyota Fortuner","Toyota Fortuner Legender"];
+
+const INDIA_STATES = [
+  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh",
+  "Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka",
+  "Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram",
+  "Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana",
+  "Tripura","Uttar Pradesh","Uttarakhand","West Bengal",
+  "Andaman & Nicobar Islands","Chandigarh","Dadra & Nagar Haveli","Daman & Diu",
+  "Delhi","Jammu & Kashmir","Ladakh","Lakshadweep","Puducherry"
 ];
 
-const FINANCE_BANKS = [
-  "Toyota Financial Services","HDFC Bank","SBI","ICICI Bank",
-  "Axis Bank","Kotak Mahindra Bank","Yes Bank","IDFC First Bank","PNB","Canara Bank",
+const FINANCE_COMPANIES = [
+  "ALLAHABAD BANK","ANDHRA BANK LIMITED","AU SMALL FINANCE BANK LIMITED",
+  "AXIS BANK LIMITED","BAJAJ FINANCE LIMITED","BANDHAN BANK","BANK OF BARODA",
+  "BANK OF INDIA","BANK OF MAHARASHTRA","CANARA BANK","CENTRAL BANK OF INDIA",
+  "CHOLAMANDALAM INVESTMENT & FINANCE CO. LTD.","CITI CORP FINANCE INDIA LIMITED",
+  "EQUITAS SMALL FINANCE BANK LIMITED","ESS KAY FINCORP LIMITED","FEDERAL BANK LIMITED",
+  "FINGROWTH CO-OPERATIVE BANK LIMITED","FULLERTON INDIA CREDIT CO. LIMITED",
+  "HARYANA GRAMIN BANK","HDB FINANCIAL SERVICES LIMITED","HDFC BANK LIMITED",
+  "HINDUJA FINANCE LIMITED","ICICI BANK LIMITED","IDFC FIRST BANK LIMITED",
+  "INDIAN BANK","INDIAN OVERSEAS BANK","INDUSIND BANK LIMITED",
+  "KOGTA FINANCIAL (I) LIMITED","KOTAK MAHINDRA BANK LIMITED","KOTAK MAHINDRA PRIME LIMITED",
+  "L & T FINANCE LIMITED","MAGMA FINCORP","MAHINDRA FINANCE","MANNAPURAM FINANCE",
+  "ORIENTAL BANK OF COMMERCE","OTHER PRIVATE BANK","PUNJAB & SIND BANK",
+  "PUNJAB NATIONAL BANK","RAJASTHAN GRAMIN BANK","RELIANCE CAP",
+  "SARVA HARYANA GRAMIN BANK","SELF","SHRIRAM FINANCE LIMITED",
+  "SHRIRAM TRANSPORT FINANCE LIMITED","SK FINANCE LIMITED",
+  "SMAS AUTO LEASING INDIA PVT. LIMITED","SMFG INDIA CREDIT CO. LIMITED",
+  "STATE BANK OF INDIA","SUNDARAM FINANCE LIMITED","TATA CAPITAL LIMITED",
+  "TOYOTA FINANCAL SERVICES INDIA LIMITED","UCO BANK","UNION BANK OF INDIA",
+  "UTKARSH SMALL FINANCE BANK","VIJAYA BANK","YES BANK LIMITED"
 ];
 
-// ============================================================
-// EXECUTIVES — Add/remove as needed
-// PIN must be exactly 4 digits (stored as string)
-// ============================================================
-const EXECUTIVES = [
-  { name: "Rahul Sharma",   pin: "1234" },
-  { name: "Amit Singh",     pin: "2345" },
-  { name: "Priya Verma",    pin: "3456" },
-  { name: "Suresh Kumar",   pin: "4567" },
-  { name: "Deepak Yadav",   pin: "5678" },
-  { name: "Kavita Devi",    pin: "6789" },
-];
+function getMfgYears() {
+  const current = new Date().getFullYear();
+  const years = [];
+  for (let y = 2024; y <= current; y++) years.push(y);
+  return years;
+}
 
+const SK = "pt_qms_v4";
+let VEHICLE_DATA = [];
+let VEHICLE_LOADED = false;
 // ============================================================
-// MANAGER — separate PIN
-// ============================================================
-const MANAGER = { name: "Piyush (Owner)", pin: "0000" };
-
-// ============================================================
-// GOOGLE SHEETS WEBHOOK
-// Steps to set up:
-//   1. Open your Google Sheet
-//   2. Extensions → Apps Script
-//   3. Paste the Apps Script from SETUP.md
-//   4. Deploy as Web App → Anyone can access
-//   5. Copy the Web App URL and paste below
-// Leave blank to disable auto-sync (manual WhatsApp share still works)
-// ============================================================
-const GOOGLE_SHEETS_WEBHOOK = "";  // e.g. "https://script.google.com/macros/s/YOUR_ID/exec"
-
-// Storage key
-const SK = "pt_qms_v2";
-// ============================================================
-// PLANET TOYOTA QMS — MAIN APP
+// PLANET TOYOTA QMS v4.0
 // ============================================================
 
-// ---- State ----
-let currentUser = null;  // { name, isManager }
+let currentUser = null;
 let currentQuote = null;
 let pinBuffer = "";
 let mgrFilter = "all";
+let formState = {};
 
 // ---- Storage ----
-function loadQuotes() {
-  try { return JSON.parse(localStorage.getItem(SK) || "[]"); } catch { return []; }
-}
+function loadQuotes() { try { return JSON.parse(localStorage.getItem(SK)||"[]"); } catch { return []; } }
 function saveQuoteLocal(q) {
   const all = loadQuotes();
-  const i = all.findIndex(x => x.id === q.id);
-  if (i >= 0) all[i] = q; else all.unshift(q);
+  const i = all.findIndex(x=>x.id===q.id);
+  if (i>=0) all[i]=q; else all.unshift(q);
   localStorage.setItem(SK, JSON.stringify(all));
 }
 
-// ---- Utilities ----
+// ---- Utils ----
 function formatINR(n) {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n || 0);
+  if (!n||isNaN(n)) return "₹0";
+  return new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(n);
 }
 function genId() {
-  const d = new Date();
+  const d=new Date();
   return `PT${String(d.getFullYear()).slice(2)}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}-${Math.floor(Math.random()*900)+100}`;
 }
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 12) return "Good morning,"; if (h < 17) return "Good afternoon,"; return "Good evening,";
-}
-function thisMonth(q) {
-  const now = new Date();
-  const d = new Date(q.savedAt || Date.now());
-  return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-}
-function toast(msg, duration = 2500) {
-  const t = document.getElementById("sync-toast");
-  t.textContent = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), duration);
+function greeting() { const h=new Date().getHours(); return h<12?"Good morning,":h<17?"Good afternoon,":"Good evening,"; }
+function thisMonth(q) { const n=new Date(),d=new Date(q.savedAt||Date.now()); return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear(); }
+function toast(msg,dur=2800) { const t=document.getElementById("sync-toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),dur); }
+function goTo(name) {
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  const el=document.getElementById("screen-"+name);
+  if(el){el.classList.add("active");el.scrollTop=0;}
+  if(name==="home") renderHome();
+  if(name==="form") renderForm();
+  if(name==="dashboard") renderDashboard();
+  if(name==="manpower") renderManpower();
 }
 
-// ---- Screen navigation ----
-function goTo(name) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  const el = document.getElementById(`screen-${name}`);
-  if (el) { el.classList.add("active"); el.scrollTop = 0; }
-  if (name === "home") renderHome();
-  if (name === "form") renderForm();
-  if (name === "manager") renderManager();
+// ---- Vehicle Data ----
+async function loadVehicleData() {
+  if(VEHICLE_LOADED) return;
+  try {
+    toast("⏳ Loading vehicle data...",3000);
+    const resp = await fetch(SHEETS_URL+"?action=getVehicles&t="+Date.now());
+    const json = await resp.json();
+    if(json.status==="ok"&&json.data){ VEHICLE_DATA=json.data; VEHICLE_LOADED=true; toast("✅ Vehicle data loaded"); }
+  } catch { toast("⚠️ Could not load prices — check connection"); }
 }
+function getVariantsForModel(model) { return [...new Set(VEHICLE_DATA.filter(r=>r["Model"]===model).map(r=>r["Variant"]))]; }
+function getColoursForModelVariant(model,variant) { return VEHICLE_DATA.filter(r=>r["Model"]===model&&r["Variant"]===variant); }
+function getVehicleRow(model,variant,colour) { return VEHICLE_DATA.find(r=>r["Model"]===model&&r["Variant"]===variant&&r["Colour"]===colour)||null; }
 
 // ============================================================
 // LOGIN
 // ============================================================
 function initLogin() {
-  // Populate exec dropdown
+  pinBuffer="";
+  const staff = getStaff();
   const sel = document.getElementById("exec-select");
-  sel.innerHTML = `<option value="">— Select Executive —</option>`;
-  EXECUTIVES.forEach(e => { const o = document.createElement("option"); o.value = e.name; o.textContent = e.name; sel.appendChild(o); });
-  sel.onchange = () => { pinBuffer = ""; renderPinDots(); document.getElementById("login-error").textContent = ""; };
-  // PIN pad
-  const pad = document.getElementById("pin-pad");
-  pad.innerHTML = "";
-  [1,2,3,4,5,6,7,8,9,"",0,"⌫"].forEach(k => {
-    const btn = document.createElement("button");
-    btn.className = "pin-key" + (k === "⌫" ? " del" : "");
-    btn.textContent = k;
-    if (k === "") { btn.disabled = true; btn.style.background = "transparent"; }
-    btn.addEventListener("click", () => handlePin(k));
+  sel.innerHTML=`<option value="">— Select Your Name —</option>`;
+  staff.forEach(s=>{
+    const o=document.createElement("option");
+    o.value=s.id; o.textContent=`${s.name} (${s.role})`; sel.appendChild(o);
+  });
+  sel.onchange=()=>{ pinBuffer=""; renderPinDots(); document.getElementById("login-error").textContent=""; };
+  buildPinPad(); renderPinDots();
+}
+function buildPinPad() {
+  const pad=document.getElementById("pin-pad"); pad.innerHTML="";
+  [1,2,3,4,5,6,7,8,9,"",0,"⌫"].forEach(k=>{
+    const btn=document.createElement("button");
+    btn.className="pin-key"+(k==="⌫"?" del":"");
+    btn.textContent=k;
+    if(k===""){btn.disabled=true;btn.style.cssText="background:transparent;border:none;";}
+    btn.addEventListener("click",()=>handlePin(String(k)));
     pad.appendChild(btn);
   });
 }
-
-function renderPinDots() {
-  const dots = document.querySelectorAll("#pin-dots span");
-  dots.forEach((d, i) => d.classList.toggle("filled", i < pinBuffer.length));
-}
-
+function renderPinDots() { document.querySelectorAll("#pin-dots span").forEach((d,i)=>d.classList.toggle("filled",i<pinBuffer.length)); }
 function handlePin(k) {
-  if (k === "⌫") { pinBuffer = pinBuffer.slice(0,-1); renderPinDots(); return; }
-  if (pinBuffer.length >= 4) return;
-  pinBuffer += String(k);
-  renderPinDots();
-  if (pinBuffer.length === 4) setTimeout(tryLogin, 80);
+  if(k==="⌫"){pinBuffer=pinBuffer.slice(0,-1);renderPinDots();return;}
+  if(k===""||pinBuffer.length>=4) return;
+  pinBuffer+=k; renderPinDots();
+  if(pinBuffer.length===4) setTimeout(tryLogin,120);
 }
-
 function tryLogin() {
-  const name = document.getElementById("exec-select").value;
-  if (!name) { document.getElementById("login-error").textContent = "Please select your name first."; pinBuffer = ""; renderPinDots(); return; }
-  const exec = EXECUTIVES.find(e => e.name === name);
-  if (exec && exec.pin === pinBuffer) {
-    currentUser = { name, isManager: false };
-    document.getElementById("login-error").textContent = "";
-    goTo("home");
-  } else {
-    document.getElementById("login-error").textContent = "Incorrect PIN. Try again.";
-    pinBuffer = "";
-    renderPinDots();
-  }
+  const errEl=document.getElementById("login-error");
+  const staffId=document.getElementById("exec-select").value;
+  if(!staffId){errEl.textContent="Please select your name first.";pinBuffer="";renderPinDots();return;}
+  const staff=getStaff();
+  const user=staff.find(s=>s.id===staffId);
+  if(user&&user.pin===pinBuffer){
+    currentUser={...user}; errEl.textContent="";
+    loadVehicleData();
+    if([ROLE.OWNER,ROLE.GM,ROLE.SM,ROLE.TL].includes(user.role)) goTo("dashboard");
+    else goTo("home");
+  } else { errEl.textContent="Incorrect PIN. Please try again."; pinBuffer=""; renderPinDots(); }
 }
-
-function showManagerLogin() {
-  document.getElementById("exec-select").innerHTML = `<option value="__MANAGER__">Manager / Owner</option>`;
-  document.getElementById("exec-select").value = "__MANAGER__";
-  document.getElementById("login-error").textContent = "";
-  pinBuffer = "";
-  renderPinDots();
-  // Override tryLogin temporarily
-  document._mgrMode = true;
-}
-
-// Patch tryLogin to support manager
-const _origTryLogin = tryLogin;
-function tryLogin() {
-  if (document._mgrMode) {
-    if (pinBuffer === MANAGER.pin) {
-      currentUser = { name: MANAGER.name, isManager: true };
-      document.getElementById("login-error").textContent = "";
-      document._mgrMode = false;
-      goTo("manager");
-    } else {
-      document.getElementById("login-error").textContent = "Incorrect manager PIN.";
-      pinBuffer = "";
-      renderPinDots();
-    }
-    return;
-  }
-  _origTryLogin();
-}
-
-function logout() {
-  currentUser = null; pinBuffer = ""; document._mgrMode = false;
-  document.getElementById("exec-select").innerHTML = "";
-  initLogin();
-  goTo("login");
-}
+function logout(){currentUser=null;pinBuffer="";initLogin();goTo("login");}
 
 // ============================================================
-// HOME
+// HOME (Sales Executive)
 // ============================================================
 function renderHome() {
-  if (!currentUser) return;
-  document.getElementById("home-exec-name").textContent = currentUser.name;
-  document.getElementById("hero-greeting").textContent = greeting();
-  document.getElementById("hero-name").textContent = currentUser.name.split(" ")[0];
-  const all = loadQuotes();
-  const mine = all.filter(q => q.exec === currentUser.name);
-  const mineMonth = mine.filter(thisMonth);
-  const pipeline = mine.reduce((s,q) => s + (q.pr?.orp || 0), 0);
-  document.getElementById("hs-total").textContent = mine.length;
-  document.getElementById("hs-month").textContent = mineMonth.length;
-  document.getElementById("hs-value").textContent = pipeline >= 1e7 ? `₹${(pipeline/1e7).toFixed(1)}Cr` : pipeline >= 1e5 ? `₹${(pipeline/1e5).toFixed(0)}L` : `₹${Math.round(pipeline/1000)}K`;
+  if(!currentUser) return;
+  document.getElementById("home-exec-name").textContent=currentUser.name;
+  document.getElementById("hero-greeting").textContent=greeting();
+  document.getElementById("hero-name").textContent=currentUser.name.split(" ")[0];
+  const all=loadQuotes();
+  const mine=getVisibleQuotes(currentUser,all);
+  const pipeline=mine.reduce((s,q)=>s+(q.pr?.orp||0),0);
+  document.getElementById("hs-total").textContent=mine.length;
+  document.getElementById("hs-month").textContent=mine.filter(thisMonth).length;
+  document.getElementById("hs-value").textContent=pipeline>=1e7?`₹${(pipeline/1e7).toFixed(1)}Cr`:pipeline>=1e5?`₹${(pipeline/1e5).toFixed(0)}L`:`₹${Math.round(pipeline/1000)}K`;
   renderHomeQuotes();
 }
-
 function renderHomeQuotes() {
-  const q = loadQuotes().filter(x => x.exec === currentUser.name);
-  const s = document.getElementById("home-search").value.toLowerCase();
-  const filtered = s ? q.filter(x => (x.cust?.name||"").toLowerCase().includes(s) || (x.veh?.model||"").toLowerCase().includes(s) || (x.cust?.phone||"").includes(s) || (x.id||"").toLowerCase().includes(s)) : q;
-  const list = document.getElementById("home-quote-list");
-  if (!filtered.length) { list.innerHTML = `<div class="empty-state">No quotations yet.<br>Tap "+ New Quotation" to start.</div>`; return; }
-  list.innerHTML = filtered.map(q => `
+  const all=loadQuotes();
+  const visible=getVisibleQuotes(currentUser,all);
+  const s=(document.getElementById("home-search")?.value||"").toLowerCase();
+  const filtered=s?visible.filter(x=>(x.cust?.name||"").toLowerCase().includes(s)||(x.veh?.model||"").toLowerCase().includes(s)||(x.cust?.phone||"").includes(s)||(x.id||"").toLowerCase().includes(s)||(x.veh?.suffix||"").toLowerCase().includes(s)):visible;
+  const list=document.getElementById("home-quote-list");
+  if(!filtered.length){list.innerHTML=`<div class="empty-state">No quotations yet.<br>Tap "+ New Quotation" to start.</div>`;return;}
+  list.innerHTML=filtered.map(q=>`
     <div class="qcard" onclick="openQuote('${q.id}')">
       <div class="qcard-top"><span class="qcard-name">${q.cust?.name||"—"}</span><span class="qcard-date">${q.date||""}</span></div>
       <div class="qcard-vehicle">${q.veh?.model||""} · ${q.veh?.variant||""}</div>
-      <div class="qcard-bottom"><span class="qcard-id">#${q.id}</span><span class="qcard-price">${formatINR(q.pr?.orp)}</span></div>
+      <div class="qcard-bottom"><span class="qcard-id">#${q.id} · <span style="font-family:monospace">${q.veh?.suffix||""}</span></span><span class="qcard-price">${formatINR(q.pr?.orp)}</span></div>
     </div>`).join("");
 }
-
 function openQuote(id) {
-  const q = loadQuotes().find(x => x.id === id);
-  if (!q) return;
-  currentQuote = q;
-  document.getElementById("preview-title").textContent = `#${q.id}`;
-  renderPreview(q);
-  goTo("preview");
+  const q=loadQuotes().find(x=>x.id===id); if(!q) return;
+  currentQuote=q; renderPreview(q); goTo("preview");
+}
+
+// ============================================================
+// DASHBOARD (TL / SM / GM / Owner)
+// ============================================================
+function renderDashboard() {
+  if(!currentUser) return;
+  const all=loadQuotes();
+  const visible=getVisibleQuotes(currentUser,all);
+  const staff=getStaff();
+  const now=new Date();
+
+  // Filter
+  let filtered=visible;
+  if(mgrFilter==="today") filtered=visible.filter(q=>new Date(q.savedAt||0).toDateString()===now.toDateString());
+  else if(mgrFilter==="month") filtered=visible.filter(thisMonth);
+  else if(mgrFilter!=="all") filtered=visible.filter(q=>q.exec===mgrFilter);
+
+  const totalORP=filtered.reduce((s,q)=>s+(q.pr?.orp||0),0);
+  const pv=totalORP>=1e7?`₹${(totalORP/1e7).toFixed(1)}Cr`:totalORP>=1e5?`₹${(totalORP/1e5).toFixed(0)}L`:`₹${Math.round(totalORP/1000)}K`;
+
+  // Executive performance from visible quotes
+  const execMap={};
+  visible.forEach(q=>{
+    const e=q.exec||"Unknown";
+    if(!execMap[e]) execMap[e]={count:0,value:0};
+    execMap[e].count++; execMap[e].value+=q.pr?.orp||0;
+  });
+  const execRows=Object.entries(execMap).sort((a,b)=>b[1].value-a[1].value);
+  const maxVal=execRows[0]?.[1]?.value||1;
+
+  // Filter buttons
+  const filterPeople=visible.map(q=>q.exec).filter((v,i,a)=>a.indexOf(v)===i);
+  const filterLabels=[["all","All"],["today","Today"],["month","Month"],...filterPeople.map(n=>[n,n.split(" ")[0]])];
+
+  const body=document.getElementById("dashboard-body");
+  body.innerHTML=`
+    <div style="padding:16px 16px 0">
+      <div style="font-size:12px;color:#aaa;margin-bottom:4px;letter-spacing:0.5px">${currentUser.role.toUpperCase()} VIEW</div>
+      <div style="font-size:18px;font-weight:700;color:#111;margin-bottom:12px">Welcome, ${currentUser.name.split(" ")[0]}</div>
+      <button class="new-quote-btn" onclick="loadVehicleData();initFormState();goTo('form')" style="margin-bottom:4px">+ New Quotation</button>
+    </div>
+    <div style="padding:0 16px">
+      <div class="mgr-stats">
+        <div class="mgr-stat"><div class="mgr-stat-v">${visible.length}</div><div class="mgr-stat-l">Total Quotes</div></div>
+        <div class="mgr-stat"><div class="mgr-stat-v">${visible.filter(thisMonth).length}</div><div class="mgr-stat-l">This Month</div></div>
+        <div class="mgr-stat"><div class="mgr-stat-v">${visible.filter(q=>new Date(q.savedAt||0).toDateString()===now.toDateString()).length}</div><div class="mgr-stat-l">Today</div></div>
+        <div class="mgr-stat"><div class="mgr-stat-v">${pv}</div><div class="mgr-stat-l">Pipeline</div></div>
+      </div>
+
+      <div class="section-label">PERFORMANCE</div>
+      ${execRows.slice(0,8).map(([name,d])=>`
+        <div class="mgr-exec-row">
+          <div class="mgr-exec-name">${name}</div>
+          <div class="mgr-bar-wrap"><div class="mgr-bar-track"><div class="mgr-bar-fill" style="width:${Math.round(d.value/maxVal*100)}%"></div></div></div>
+          <div class="mgr-exec-meta"><span>${d.count} quote${d.count!==1?"s":""}</span><span class="mgr-exec-value">${formatINR(d.value)}</span></div>
+        </div>`).join("")}
+
+      <div class="section-label" style="margin-top:16px">FILTER QUOTES</div>
+      <div class="mgr-filter-row">${filterLabels.map(([v,l])=>`<button class="mgr-filter${mgrFilter===v?" active":""}" onclick="mgrFilter='${v}';renderDashboard()">${l}</button>`).join("")}</div>
+
+      <div id="dash-quote-list">
+        ${filtered.length===0?`<div class="empty-state">No quotes in this filter.</div>`:
+          filtered.map(q=>`
+            <div class="qcard" onclick="openQuote('${q.id}')">
+              <div class="qcard-top"><span class="qcard-name">${q.cust?.name||"—"}</span><span class="qcard-date">${q.date||""}</span></div>
+              <div class="qcard-vehicle">${q.veh?.model||""} · ${q.veh?.variant||""} · <span style="font-family:monospace;font-size:11px">${q.veh?.suffix||""}</span></div>
+              <div class="qcard-bottom"><span class="qcard-exec">${q.exec||"—"}</span><span class="qcard-price">${formatINR(q.pr?.orp)}</span></div>
+            </div>`).join("")}
+      </div>
+      ${canManageStaff(currentUser.role)?`<button class="btn-primary" style="margin-top:16px" onclick="goTo('manpower')">👥 Manage Staff & PINs</button>`:""}
+      <div style="height:28px"></div>
+    </div>`;
+}
+
+// ============================================================
+// MANPOWER MANAGEMENT
+// ============================================================
+function renderManpower() {
+  const staff=getStaff();
+  const teams={};
+  staff.filter(s=>s.role===ROLE.TL).forEach(tl=>{ teams[tl.teamId]={tl,execs:staff.filter(s=>s.teamId===tl.teamId&&s.role===ROLE.EXEC)}; });
+  const senior=staff.filter(s=>[ROLE.OWNER,ROLE.GM,ROLE.SM].includes(s.role));
+
+  const body=document.getElementById("manpower-body");
+  body.innerHTML=`
+    <div style="padding:16px">
+      <button class="btn-primary" style="margin-bottom:16px" onclick="showAddStaff()">+ Add New Staff Member</button>
+
+      <div class="section-label">SENIOR MANAGEMENT</div>
+      ${senior.map(s=>staffCard(s)).join("")}
+
+      ${Object.entries(teams).map(([tid,{tl,execs}])=>`
+        <div class="section-label" style="margin-top:14px">TEAM: ${tl.name}</div>
+        ${staffCard(tl)}
+        ${execs.map(e=>staffCard(e)).join("")}
+      `).join("")}
+
+      <div id="add-staff-form"></div>
+      <div style="height:32px"></div>
+    </div>`;
+}
+
+function staffCard(s) {
+  const roleColor={[ROLE.OWNER]:"#EB0A1E",[ROLE.GM]:"#534AB7",[ROLE.SM]:"#1D9E75",[ROLE.TL]:"#BA7517",[ROLE.EXEC]:"#555"};
+  return `
+    <div class="mgr-exec-row" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#111">${s.name}</div>
+          <div style="font-size:11px;font-weight:600;color:${roleColor[s.role]||"#888"};margin-top:2px">${s.role}</div>
+          <div style="font-size:12px;color:#888;margin-top:3px;">📞 ${s.mobile||"<span style='color:#ccc'>Mobile not added</span>"}</div>
+          <div style="font-size:12px;color:#aaa;margin-top:2px;font-family:monospace;letter-spacing:2px">PIN: ${s.pin}</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button onclick="editStaff('${s.id}')" style="padding:6px 12px;border:1px solid #EB0A1E;color:#EB0A1E;background:transparent;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer">Edit</button>
+          ${s.role!==ROLE.OWNER?`<button onclick="deleteStaff('${s.id}')" style="padding:6px 12px;border:1px solid #ddd;color:#888;background:transparent;border-radius:6px;font-size:12px;cursor:pointer">Delete</button>`:""}
+        </div>
+      </div>
+    </div>`;
+}
+
+function showAddStaff() {
+  const staff=getStaff();
+  const tls=staff.filter(s=>s.role===ROLE.TL);
+  document.getElementById("add-staff-form").innerHTML=`
+    <div style="background:#f8f8f8;border-radius:12px;padding:16px;margin-top:16px;border:1px solid #eee">
+      <div style="font-weight:700;font-size:14px;margin-bottom:12px">Add New Staff Member</div>
+      <label class="field-label">Full Name *</label>
+      <input class="field-input" id="ns-name" placeholder="Enter name" />
+      <label class="field-label">Role *</label>
+      <select class="field-input" id="ns-role" onchange="toggleTeamSelect()">
+        <option value="">— Select Role —</option>
+        <option value="${ROLE.EXEC}">Sales Executive</option>
+        <option value="${ROLE.TL}">Team Leader</option>
+        <option value="${ROLE.SM}">Sales Manager</option>
+        <option value="${ROLE.GM}">GM Sales</option>
+      </select>
+      <div id="ns-team-wrap" style="display:none">
+        <label class="field-label">Assign to Team *</label>
+        <select class="field-input" id="ns-team">
+          <option value="">— Select Team Leader —</option>
+          ${tls.map(tl=>`<option value="${tl.teamId}">${tl.name}'s Team</option>`).join("")}
+          <option value="NEW">Create New Team</option>
+        </select>
+      </div>
+      <label class="field-label">Mobile Number</label>
+      <input class="field-input" id="ns-mobile" type="tel" maxlength="10" placeholder="10-digit mobile" />
+      <label class="field-label">PIN * (4 digits)</label>
+      <input class="field-input" id="ns-pin" type="number" placeholder="e.g. 1234" maxlength="4" />
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn-primary" style="margin-top:0" onclick="saveNewStaff()">Save</button>
+        <button class="btn-outline" onclick="document.getElementById('add-staff-form').innerHTML=''">Cancel</button>
+      </div>
+    </div>`;
+}
+
+function toggleTeamSelect() {
+  const role=document.getElementById("ns-role").value;
+  const tw=document.getElementById("ns-team-wrap");
+  if(tw) tw.style.display=(role===ROLE.EXEC||role===ROLE.TL)?"block":"none";
+}
+
+function saveNewStaff() {
+  const name=document.getElementById("ns-name").value.trim();
+  const role=document.getElementById("ns-role").value;
+  const mobile=document.getElementById("ns-mobile")?.value.trim()||"";
+  const pin=String(document.getElementById("ns-pin").value).trim();
+  const teamSel=document.getElementById("ns-team");
+  const teamId=teamSel?teamSel.value:"";
+  if(!name||!role||!pin||pin.length!==4){toast("⚠️ Please fill all fields correctly");return;}
+  const staff=getStaff();
+  // Generate team ID for new TL
+  let finalTeamId=teamId;
+  if(role===ROLE.TL&&teamId==="NEW"){
+    const existing=staff.filter(s=>s.teamId&&s.teamId.startsWith("T")).map(s=>parseInt(s.teamId.slice(1))||0);
+    finalTeamId="T"+(Math.max(0,...existing)+1);
+  }
+  if((role===ROLE.EXEC||role===ROLE.TL)&&!finalTeamId){toast("⚠️ Please select a team");return;}
+  const newId="u"+Date.now();
+  staff.push({id:newId,name,role,pin,mobile,teamId:finalTeamId||null});
+  saveStaff(staff);
+  toast("✅ "+name+" added successfully");
+  renderManpower();
+}
+
+function editStaff(id) {
+  const staff=getStaff();
+  const s=staff.find(x=>x.id===id); if(!s) return;
+  const tls=staff.filter(x=>x.role===ROLE.TL);
+  const form=document.getElementById("add-staff-form");
+  form.innerHTML=`
+    <div style="background:#fff0f0;border-radius:12px;padding:16px;margin-top:16px;border:1px solid #f5c6cb">
+      <div style="font-weight:700;font-size:14px;margin-bottom:12px">Edit: ${s.name}</div>
+      <label class="field-label">Full Name *</label>
+      <input class="field-input" id="es-name" value="${s.name}" />
+      <label class="field-label">Mobile Number</label>
+      <input class="field-input" id="es-mobile" type="tel" maxlength="10" value="${s.mobile||''}" placeholder="10-digit mobile" />
+      <label class="field-label">PIN * (4 digits)</label>
+      <input class="field-input" id="es-pin" type="number" value="${s.pin}" maxlength="4" />
+      ${s.role===ROLE.EXEC?`
+        <label class="field-label">Team</label>
+        <select class="field-input" id="es-team">
+          ${tls.map(tl=>`<option value="${tl.teamId}" ${tl.teamId===s.teamId?"selected":""}>${tl.name}'s Team</option>`).join("")}
+        </select>`:""}
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn-primary" style="margin-top:0" onclick="saveEditStaff('${id}')">Update</button>
+        <button class="btn-outline" onclick="document.getElementById('add-staff-form').innerHTML=''">Cancel</button>
+      </div>
+    </div>`;
+  form.scrollIntoView({behavior:"smooth"});
+}
+
+function saveEditStaff(id) {
+  const staff=getStaff();
+  const i=staff.findIndex(s=>s.id===id); if(i<0) return;
+  const name=document.getElementById("es-name").value.trim();
+  const mobile=document.getElementById("es-mobile")?.value.trim()||"";
+  const pin=String(document.getElementById("es-pin").value).trim();
+  const teamSel=document.getElementById("es-team");
+  if(!name||!pin||pin.length!==4){toast("⚠️ Please fill all fields correctly");return;}
+  staff[i].name=name; staff[i].pin=pin; staff[i].mobile=mobile;
+  if(teamSel) staff[i].teamId=teamSel.value;
+  saveStaff(staff);
+  toast("✅ Updated successfully");
+  renderManpower();
+}
+
+function deleteStaff(id) {
+  const staff=getStaff();
+  const s=staff.find(x=>x.id===id); if(!s) return;
+  if(!confirm(`Delete ${s.name}? This cannot be undone.`)) return;
+  saveStaff(staff.filter(x=>x.id!==id));
+  toast("🗑️ "+s.name+" removed");
+  renderManpower();
 }
 
 // ============================================================
 // FORM
 // ============================================================
-let formState = {};
-
 function initFormState() {
-  formState = { cName:"", cPhone:"", cCity:"", model:"", variant:"", color:"", exShow:"", accs:[], tcs:true, ins:"", rto:"", hand:"", disc:"", fBank:"", fLoan:"", fTenure:60, fDown:"", notes:"" };
+  formState={
+    cName:"",cPhone:"",cCity:"",mfgYear:new Date().getFullYear(),
+    model:"",variant:"",colour:"",interior:"",suffix:"",fuelType:"",
+    exShowroom:0,regType:"Personal",custState:"Haryana",
+    insurance:0,insuranceType:"",rto:0,
+    tcs:true,epc:false,hsrp:true,fastag:true,
+    tga:0,tgloss:0,tsmile:0,ewDuration:"",ewPrice:0,ew2:0,ew3:0,
+    discount:0,otherCharges:0,hypothecation:"",notes:""
+  };
 }
-
-function renderForm() {
-  initFormState();
-  buildFormHTML();
-}
+function renderForm(){initFormState();buildFormHTML();}
 
 function buildFormHTML() {
-  const body = document.getElementById("form-body");
-  body.innerHTML = `
+  const mfgYears=getMfgYears();
+  const body=document.getElementById("form-body");
+  body.innerHTML=`
     <div class="form-section">👤 Customer Details</div>
     <label class="field-label">Customer Name *</label>
-    <input class="field-input" id="f-cName" placeholder="Full name" oninput="formState.cName=this.value;updatePriceSummary()" />
+    <input class="field-input" id="f-cName" placeholder="Full name" oninput="formState.cName=this.value;updateSummary()" />
     <div class="field-row">
-      <div class="field-half">
-        <label class="field-label">Mobile Number *</label>
-        <input class="field-input" id="f-cPhone" type="tel" maxlength="10" placeholder="10-digit" oninput="formState.cPhone=this.value" />
-      </div>
-      <div class="field-half">
-        <label class="field-label">City / Village</label>
-        <input class="field-input" id="f-cCity" placeholder="Narnaul / Ateli..." oninput="formState.cCity=this.value" />
-      </div>
+      <div class="field-half"><label class="field-label">Mobile *</label>
+        <input class="field-input" id="f-cPhone" type="tel" maxlength="10" placeholder="10-digit" oninput="formState.cPhone=this.value" /></div>
+      <div class="field-half"><label class="field-label">City / Village</label>
+        <input class="field-input" id="f-cCity" placeholder="Narnaul..." oninput="formState.cCity=this.value" /></div>
     </div>
 
-    <div class="form-section">🚗 Vehicle Selection</div>
+    <div class="form-section">🚗 Vehicle Details</div>
     <label class="field-label">Model *</label>
-    <select class="field-input" id="f-model" onchange="formState.model=this.value;formState.variant='';renderVariants()">
+    <select class="field-input" id="f-model" onchange="formState.model=this.value;formState.variant='';formState.colour='';formState.suffix='';formState.exShowroom=0;renderVariantDD();updateSummary()">
       <option value="">— Select Model —</option>
-      ${MODELS.map(m=>`<option>${m.name}</option>`).join("")}
+      ${MODEL_LIST.map(m=>`<option>${m}</option>`).join("")}
     </select>
     <div id="variant-wrap"></div>
-    <label class="field-label">Colour</label>
-    <select class="field-input" id="f-color" onchange="formState.color=this.value">
-      <option value="">— Select Colour —</option>
-      ${COLORS.map(c=>`<option>${c}</option>`).join("")}
+    <div id="colour-wrap"></div>
+    <div id="suffix-display"></div>
+
+    <div class="form-section">📋 Registration</div>
+    <label class="field-label">Registration Type *</label>
+    <div class="toggle-row">
+      <button class="toggle-btn active" id="reg-personal" onclick="setRegType('Personal')">Personal</button>
+      <button class="toggle-btn" id="reg-commercial" onclick="setRegType('Commercial')">Commercial</button>
+    </div>
+    <label class="field-label">Customer State *</label>
+    <select class="field-input" id="f-state" onchange="formState.custState=this.value;renderRTOField();renderInsuranceField();renderEPCField()">
+      ${INDIA_STATES.map(s=>`<option ${s==="Haryana"?"selected":""}>${s}</option>`).join("")}
     </select>
 
     <div class="form-section">💰 Pricing</div>
-    <label class="field-label">Ex-Showroom Price (₹) *</label>
-    <input class="field-input" id="f-exShow" type="number" placeholder="e.g. 1800000" oninput="formState.exShow=this.value;updatePriceSummary()" />
-    <div class="field-row">
-      <div class="field-half">
-        <label class="field-label">Insurance (₹)</label>
-        <input class="field-input" id="f-ins" type="number" placeholder="0" oninput="formState.ins=this.value;updatePriceSummary()" />
-      </div>
-      <div class="field-half">
-        <label class="field-label">RTO (₹)</label>
-        <input class="field-input" id="f-rto" type="number" placeholder="0" oninput="formState.rto=this.value;updatePriceSummary()" />
-      </div>
+    <div id="rto-field"></div>
+    <div id="insurance-field"></div>
+    <div class="tcs-row">
+      <div><div class="tcs-info">TCS @ 1%</div><div class="tcs-sub" id="tcs-label">Auto-calculated on ex-showroom</div></div>
+      <div class="tcs-toggle"><span id="tcs-val">₹0</span>
+        <input type="checkbox" id="f-tcs" checked onchange="formState.tcs=this.checked;updateSummary()" /></div>
     </div>
-    <div class="field-row">
-      <div class="field-half">
-        <label class="field-label">Handling / Other (₹)</label>
-        <input class="field-input" id="f-hand" type="number" placeholder="0" oninput="formState.hand=this.value;updatePriceSummary()" />
-      </div>
-      <div class="field-half">
-        <label class="field-label">Discount / Offer (₹)</label>
-        <input class="field-input" id="f-disc" type="number" placeholder="0" oninput="formState.disc=this.value;updatePriceSummary()" />
-      </div>
+    <div id="epc-row"></div>
+    <div class="tcs-row">
+      <div><div class="tcs-info">HSRP Garnish</div><div class="tcs-sub">Fixed · ₹1,500</div></div>
+      <div class="tcs-toggle"><span>₹1,500</span>
+        <input type="checkbox" id="f-hsrp" checked onchange="formState.hsrp=this.checked;updateSummary()" /></div>
     </div>
     <div class="tcs-row">
-      <div>
-        <div class="tcs-info">TCS @ 1%</div>
-        <div class="tcs-sub" id="tcs-amount-label">Auto-calculated on ex-showroom</div>
-      </div>
-      <div class="tcs-toggle">
-        <span id="tcs-value-display">₹0</span>
-        <input type="checkbox" id="f-tcs" checked onchange="formState.tcs=this.checked;updatePriceSummary()" />
-      </div>
+      <div><div class="tcs-info">FASTag</div><div class="tcs-sub">Fixed · ₹800</div></div>
+      <div class="tcs-toggle"><span>₹800</span>
+        <input type="checkbox" id="f-fastag" checked onchange="formState.fastag=this.checked;updateSummary()" /></div>
     </div>
 
-    <div class="form-section">🛠️ Accessories</div>
-    <input class="search-input" id="acc-search" placeholder="Search accessories..." oninput="renderAccChips()" style="margin-bottom:8px" />
-    <div class="acc-chips" id="acc-chips"></div>
-    <div class="acc-total" id="acc-total"></div>
+    <div class="form-section">🛠️ Value Added Services</div>
+    <label class="field-label">Toyota Genuine Accessories (₹)</label>
+    <input class="field-input" id="f-tga" type="number" placeholder="Enter total amount" oninput="formState.tga=parseFloat(this.value)||0;updateSummary()" />
+    <label class="field-label">T-Gloss (₹)</label>
+    <input class="field-input" id="f-tgloss" type="number" placeholder="Enter amount" oninput="formState.tgloss=parseFloat(this.value)||0;updateSummary()" />
+    <label class="field-label">T-Smile (₹)</label>
+    <input class="field-input" id="f-tsmile" type="number" placeholder="Enter amount" oninput="formState.tsmile=parseFloat(this.value)||0;updateSummary()" />
 
-    <div class="form-section">🏦 Finance (Optional)</div>
-    <select class="field-input" id="f-fBank" onchange="formState.fBank=this.value;renderFinanceFields()">
-      <option value="">Cash / Not yet decided</option>
-      ${FINANCE_BANKS.map(b=>`<option>${b}</option>`).join("")}
+    <div class="form-section">🛡️ Extended Warranty</div>
+    <div id="ew-field"><div style="font-size:12px;color:#aaa;padding:8px 0">Select a vehicle above to see options.</div></div>
+
+    <div class="form-section">💼 Other & Finance</div>
+    <label class="field-label">Discount / Offer (₹)</label>
+    <input class="field-input" id="f-disc" type="number" placeholder="Enter discount amount if any" oninput="formState.discount=parseFloat(this.value)||0;updateSummary()" />
+    <label class="field-label">Other Charges (₹)</label>
+    <input class="field-input" id="f-other" type="number" placeholder="Enter amount if any" oninput="formState.otherCharges=parseFloat(this.value)||0;updateSummary()" />
+    <label class="field-label">Hypothecation</label>
+    <select class="field-input" id="f-hypo" onchange="formState.hypothecation=this.value">
+      <option value="">— Self Funded / Not Applicable —</option>
+      ${FINANCE_COMPANIES.map(f=>`<option>${f}</option>`).join("")}
     </select>
-    <div id="finance-fields"></div>
 
-    <div class="form-section">📝 Notes</div>
-    <textarea class="field-input" id="f-notes" rows="3" placeholder="Exchange offer, colour availability, special request..." oninput="formState.notes=this.value" style="resize:none"></textarea>
+    <div class="form-section">📝 Internal Notes</div>
+    <label class="field-label">Manufacturing Year</label>
+    <select class="field-input" id="f-mfgYear" onchange="formState.mfgYear=this.value">
+      ${mfgYears.map(y=>`<option value="${y}" ${y===new Date().getFullYear()?"selected":""}>${y}</option>`).join("")}
+    </select>
+    <label class="field-label">Notes (Internal Use Only — not visible to customer)</label>
+    <textarea class="field-input" id="f-notes" rows="3" placeholder="Internal remarks, follow-up action, exchange vehicle details..." oninput="formState.notes=this.value" style="resize:none;border-color:#f0a500;background:#fffbe6"></textarea>
+    <div style="font-size:11px;color:#f0a500;margin-top:4px;">⚠️ These notes will NOT appear on the customer quotation or WhatsApp message.</div>
 
     <div id="price-summary-wrap"></div>
-
     <button class="btn-primary" id="gen-btn" onclick="generateQuote()" disabled>Generate Quotation →</button>
-    <div style="height:28px"></div>
-  `;
-  renderAccChips();
-  updatePriceSummary();
+    <div style="height:28px"></div>`;
+
+  renderRTOField(); renderInsuranceField(); renderEPCField(); updateSummary();
 }
 
-function renderVariants() {
-  const wrap = document.getElementById("variant-wrap");
-  const m = MODELS.find(x => x.name === formState.model);
-  if (!m) { wrap.innerHTML = ""; return; }
-  wrap.innerHTML = `<label class="field-label">Variant *</label>
-    <select class="field-input" id="f-variant" onchange="formState.variant=this.value">
-      <option value="">— Select Variant —</option>
-      ${m.variants.map(v=>`<option>${v}</option>`).join("")}
+function setRegType(type) {
+  formState.regType=type;
+  document.getElementById("reg-personal").classList.toggle("active",type==="Personal");
+  document.getElementById("reg-commercial").classList.toggle("active",type==="Commercial");
+  renderInsuranceField(); renderEPCField(); updateSummary();
+}
+function renderVariantDD() {
+  const vw=document.getElementById("variant-wrap"),cw=document.getElementById("colour-wrap"),sd=document.getElementById("suffix-display");
+  const variants=getVariantsForModel(formState.model);
+  if(!variants.length){vw.innerHTML=`<div style="font-size:12px;color:#EB0A1E;margin-top:6px;padding:8px 12px;background:#fff0f0;border-radius:8px;">⚠️ No vehicles found in Vehicle Master sheet for this model.</div>`;cw.innerHTML="";sd.innerHTML="";return;}
+  vw.innerHTML=`<label class="field-label">Variant *</label>
+    <select class="field-input" id="f-variant" onchange="formState.variant=this.value;formState.colour='';formState.suffix='';formState.exShowroom=0;renderColourDD();updateSummary()">
+      <option value="">— Select Variant —</option>${variants.map(v=>`<option>${v}</option>`).join("")}</select>`;
+  cw.innerHTML="";sd.innerHTML="";
+}
+function renderColourDD() {
+  const cw=document.getElementById("colour-wrap"),sd=document.getElementById("suffix-display");
+  const colours=getColoursForModelVariant(formState.model,formState.variant);
+  if(!colours.length){cw.innerHTML="";sd.innerHTML="";return;}
+  cw.innerHTML=`<label class="field-label">Colour *</label>
+    <select class="field-input" id="f-colour" onchange="onColourSelect(this.value)">
+      <option value="">— Select Colour —</option>
+      ${colours.map(c=>`<option value="${c["Colour"]}">${c["Colour"]}${c["Interior"]?" · "+c["Interior"]+" Interior":""}</option>`).join("")}
     </select>`;
+  sd.innerHTML="";
 }
-
-function renderAccChips() {
-  const s = (document.getElementById("acc-search")?.value || "").toLowerCase();
-  const chips = document.getElementById("acc-chips");
-  chips.innerHTML = ACCESSORIES.filter(a => a.name.toLowerCase().includes(s)).map(a => {
-    const active = formState.accs.find(x=>x.name===a.name);
-    return `<span class="acc-chip${active?" active":""}" onclick="toggleAcc('${a.name}',${a.price})">${a.name} ${formatINR(a.price)}</span>`;
-  }).join("");
-  const total = formState.accs.reduce((s,a)=>s+a.price,0);
-  const at = document.getElementById("acc-total");
-  at.textContent = formState.accs.length ? `Accessories total: ${formatINR(total)}` : "";
+function onColourSelect(colour) {
+  formState.colour=colour;
+  const row=getVehicleRow(formState.model,formState.variant,colour);
+  if(row){
+    formState.suffix=row["Suffix Code"]||"";
+    formState.exShowroom=parseFloat(row["Ex-Showroom Price"])||0;
+    formState.interior=row["Interior"]||"";
+    formState.fuelType=row["Fuel Type"]||"";
+    formState.ew2=parseFloat(row["EW 2 Year Price"])||0;
+    formState.ew3=parseFloat(row["EW 3 Year Price"])||0;
+  }
+  document.getElementById("suffix-display").innerHTML=formState.suffix?`
+    <div style="background:#f0fff0;border:1px solid #c3e6cb;border-radius:8px;padding:10px 14px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
+      <div><div style="font-size:11px;color:#666;margin-bottom:2px">SUFFIX CODE</div>
+        <div style="font-size:16px;font-weight:700;color:#111;font-family:monospace">${formState.suffix}</div></div>
+      <div style="text-align:right"><div style="font-size:11px;color:#666;margin-bottom:2px">EX-SHOWROOM</div>
+        <div style="font-size:15px;font-weight:700;color:#EB0A1E">${formatINR(formState.exShowroom)}</div></div>
+    </div>`:"";
+  renderEPCField(); renderEWField(); updateSummary();
 }
-
-function toggleAcc(name, price) {
-  const has = formState.accs.find(a=>a.name===name);
-  formState.accs = has ? formState.accs.filter(a=>a.name!==name) : [...formState.accs, {name,price}];
-  renderAccChips();
-  updatePriceSummary();
+function renderRTOField() {
+  const isH=formState.custState==="Haryana";
+  document.getElementById("rto-field").innerHTML=`
+    <label class="field-label">${isH?"RTO & Registration (₹)":"Temp. Registration (₹)"}</label>
+    <input class="field-input" id="f-rto" type="number" placeholder="${isH?"Enter RTO amount":"Enter temp. registration amount"}" value="${formState.rto||""}" oninput="formState.rto=parseFloat(this.value)||0;updateSummary()" />`;
 }
-
-function renderFinanceFields() {
-  const wrap = document.getElementById("finance-fields");
-  if (!formState.fBank) { wrap.innerHTML = ""; return; }
-  wrap.innerHTML = `
-    <div class="field-row" style="margin-top:10px">
-      <div class="field-half"><label class="field-label">Loan Amount (₹)</label><input class="field-input" id="f-fLoan" type="number" placeholder="0" oninput="formState.fLoan=this.value" /></div>
-      <div class="field-half"><label class="field-label">Down Payment (₹)</label><input class="field-input" id="f-fDown" type="number" placeholder="0" oninput="formState.fDown=this.value" /></div>
-    </div>
-    <label class="field-label">Loan Tenure: <span id="tenure-display">${formState.fTenure}</span> months</label>
-    <input type="range" class="tenure-slider" min="12" max="84" step="12" value="${formState.fTenure}" oninput="formState.fTenure=parseInt(this.value);document.getElementById('tenure-display').textContent=this.value" />
-    <div class="tenure-labels"><span>12m</span><span>36m</span><span>60m</span><span>84m</span></div>`;
+function renderInsuranceField() {
+  const isP=formState.regType==="Personal";
+  let html=`<label class="field-label">Insurance Type</label><select class="field-input" id="f-insType" onchange="formState.insuranceType=this.value">`;
+  if(isP) html+=`<option value="">— Select —</option><option>Insurance 1+3 Years</option><option>Insurance 3+3 Years</option>`;
+  else { html+=`<option value="Insurance 1+1 Years">Insurance 1+1 Years</option>`; formState.insuranceType="Insurance 1+1 Years"; }
+  html+=`</select><label class="field-label">Insurance Amount (₹)</label>
+    <input class="field-input" id="f-ins" type="number" placeholder="Enter insurance amount" value="${formState.insurance||""}" oninput="formState.insurance=parseFloat(this.value)||0;updateSummary()" />`;
+  document.getElementById("insurance-field").innerHTML=html;
 }
+function renderEPCField() {
+  const show=EPC_MODELS.includes(formState.model)&&formState.regType==="Personal"&&formState.custState==="Haryana";
+  const epcAmt=show?Math.round(formState.exShowroom*0.01):0;
+  if(!show){formState.epc=false;document.getElementById("epc-row").innerHTML="";return;}
+  document.getElementById("epc-row").innerHTML=`
+    <div class="tcs-row">
+      <div><div class="tcs-info">Environmental Protection Cess (EPC)</div>
+        <div class="tcs-sub">1% of ex-showroom · ${formatINR(epcAmt)}</div></div>
+      <div class="tcs-toggle"><span>${formatINR(epcAmt)}</span>
+        <input type="checkbox" id="f-epc" ${formState.epc?"checked":""} onchange="formState.epc=this.checked;updateSummary()" /></div>
+    </div>`;
+}
+function renderEWField() {
+  const ew2=formState.ew2||0,ew3=formState.ew3||0;
+  document.getElementById("ew-field").innerHTML=!ew2&&!ew3
+    ?`<div style="font-size:12px;color:#aaa;padding:8px 0">Select a vehicle above to see options.</div>`
+    :`<label class="field-label">Extended Warranty Duration</label>
+      <select class="field-input" id="f-ew" onchange="onEWSelect(this.value)">
+        <option value="">— Not Required —</option>
+        ${ew2?`<option value="2">2 Year — ${formatINR(ew2)}</option>`:""}
+        ${ew3?`<option value="3">3 Year — ${formatINR(ew3)}</option>`:""}
+      </select>`;
+  formState.ewDuration="";formState.ewPrice=0;updateSummary();
+}
+function onEWSelect(val){formState.ewDuration=val?val+" Year":"";formState.ewPrice=val==="2"?formState.ew2:val==="3"?formState.ew3:0;updateSummary();}
 
 function calcPricing() {
-  const exS = parseFloat(formState.exShow) || 0;
-  const accT = formState.accs.reduce((s,a)=>s+a.price,0);
-  const tcsA = formState.tcs ? Math.round(exS*0.01) : 0;
-  const ins = parseFloat(formState.ins) || 0;
-  const rto = parseFloat(formState.rto) || 0;
-  const hand = parseFloat(formState.hand) || 0;
-  const disc = parseFloat(formState.disc) || 0;
-  const fastag = 400;
-  const orp = exS + accT + tcsA + ins + rto + hand + fastag - disc;
-  return { exS, accT, tcsA, ins, rto, hand, fastag, disc, orp };
+  const exS=formState.exShowroom||0;
+  const tcsA=formState.tcs?Math.round(exS*0.01):0;
+  const epcA=formState.epc?Math.round(exS*0.01):0;
+  const ins=parseFloat(formState.insurance)||0;
+  const rto=parseFloat(formState.rto)||0;
+  const hsrp=formState.hsrp?1500:0;
+  const fastag=formState.fastag?800:0;
+  const tga=parseFloat(formState.tga)||0;
+  const tgloss=parseFloat(formState.tgloss)||0;
+  const tsmile=parseFloat(formState.tsmile)||0;
+  const ew=parseFloat(formState.ewPrice)||0;
+  const other=parseFloat(formState.otherCharges)||0;
+  const disc=parseFloat(formState.discount)||0;
+  const orp=exS+tcsA+epcA+ins+rto+hsrp+fastag+tga+tgloss+tsmile+ew+other-disc;
+  return{exS,tcsA,epcA,ins,rto,hsrp,fastag,tga,tgloss,tsmile,ew,other,disc,orp};
 }
-
-function updatePriceSummary() {
-  const p = calcPricing();
-  // Update TCS display
-  const tv = document.getElementById("tcs-value-display");
-  if (tv) tv.textContent = formatINR(p.tcsA);
-  const tl = document.getElementById("tcs-amount-label");
-  if (tl) tl.textContent = `Auto-calculated · ${formatINR(p.tcsA)}`;
-
-  const wrap = document.getElementById("price-summary-wrap");
-  if (!wrap) return;
-  const rows = [
-    ["Ex-Showroom Price", p.exS],
-    ["Accessories", p.accT],
-    ["TCS @ 1%", p.tcsA],
-    ["Insurance", p.ins],
-    ["RTO & Registration", p.rto],
-    ["Handling / Logistics", p.hand],
-    ["FASTag", p.fastag],
+function updateSummary() {
+  const p=calcPricing();
+  const discAmt=p.disc||0;
+  const tl=document.getElementById("tcs-label"); if(tl) tl.textContent=`Auto-calculated · ${formatINR(p.tcsA)}`;
+  const tv=document.getElementById("tcs-val"); if(tv) tv.textContent=formatINR(p.tcsA);
+  const wrap=document.getElementById("price-summary-wrap"); if(!wrap) return;
+  const rows=[
+    ["Ex-Showroom Price",p.exS],["Toyota Genuine Accessories",p.tga],
+    ["T-Gloss",p.tgloss],["T-Smile",p.tsmile],
+    ["Extended Warranty"+(formState.ewDuration?" ("+formState.ewDuration+")":""),p.ew],
+    ["TCS @ 1%",p.tcsA],["EPC @ 1%",p.epcA],
+    [formState.custState==="Haryana"?"RTO & Registration":"Temp. Registration",p.rto],
+    [document.getElementById("f-insType")?.value||"Insurance",p.ins],
+    ["HSRP Garnish",p.hsrp],["FASTag",p.fastag],["Other Charges",p.other],
   ].filter(([,v])=>v>0);
-  wrap.innerHTML = `
-    <div class="price-summary" style="margin-top:16px">
-      <div class="section-label" style="margin-bottom:8px">PRICE SUMMARY</div>
-      ${rows.map(([l,v])=>`<div class="price-row"><span class="pl">${l}</span><span>${formatINR(v)}</span></div>`).join("")}
-      ${p.disc>0?`<div class="price-row discount"><span>Discount</span><span>−${formatINR(p.disc)}</span></div>`:""}
-      <div class="price-total"><span>On-Road Price</span><span>${formatINR(p.orp)}</span></div>
-    </div>`;
-
-  // Enable/disable generate button
-  const btn = document.getElementById("gen-btn");
-  if (btn) btn.disabled = !(formState.cName && formState.model && p.exS > 0);
+  wrap.innerHTML=`<div class="price-summary" style="margin-top:16px">
+    <div class="section-label" style="margin-bottom:8px">PRICE SUMMARY</div>
+    ${rows.map(([l,v])=>`<div class="price-row"><span class="pl">${l}</span><span>${formatINR(v)}</span></div>`).join("")}
+    ${discAmt>0?`<div class="price-row discount"><span class="pl">Discount / Offer</span><span style="color:#1a8a4a">− ${formatINR(discAmt)}</span></div>`:""}
+    <div class="price-total"><span>On-Road Price</span><span>${formatINR(p.orp)}</span></div>
+  </div>`;
+  const btn=document.getElementById("gen-btn");
+  if(btn) btn.disabled=!(formState.cName&&formState.model&&formState.variant&&formState.exShowroom>0);
 }
-
 function generateQuote() {
-  const p = calcPricing();
-  const q = {
-    id: genId(),
-    date: new Date().toLocaleDateString("en-IN", {day:"2-digit",month:"short",year:"numeric"}),
-    savedAt: Date.now(),
-    cust: { name: formState.cName, phone: formState.cPhone, city: formState.cCity },
-    veh: { model: formState.model, variant: formState.variant, color: formState.color },
-    pr: { ...p, accs: formState.accs },
-    fin: { bank: formState.fBank, loan: parseFloat(formState.fLoan)||0, ten: formState.fTenure, down: parseFloat(formState.fDown)||0 },
-    exec: currentUser.name,
-    notes: formState.notes,
+  const p=calcPricing();
+  const insType=document.getElementById("f-insType")?.value||formState.insuranceType||"";
+  const q={
+    id:genId(),date:new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}),
+    savedAt:Date.now(),mfgYear:formState.mfgYear,
+    cust:{name:formState.cName,phone:formState.cPhone,city:formState.cCity},
+    veh:{model:formState.model,variant:formState.variant,colour:formState.colour,interior:formState.interior,suffix:formState.suffix,fuelType:formState.fuelType},
+    reg:{type:formState.regType,state:formState.custState},
+    pr:{...p,insuranceType:insType,ewDuration:formState.ewDuration,discount:formState.discount},
+    hypothecation:formState.hypothecation,exec:currentUser.name,notes:formState.notes,
   };
-  saveQuoteLocal(q);
-  syncToSheets(q);
-  currentQuote = q;
-  document.getElementById("preview-title").textContent = `#${q.id}`;
-  renderPreview(q);
-  goTo("preview");
-  toast("✅ Quotation saved!");
+  saveQuoteLocal(q); syncToSheets(q); currentQuote=q;
+  renderPreview(q); goTo("preview"); toast("✅ Quotation saved!");
 }
 
 // ============================================================
 // PREVIEW
 // ============================================================
-function renderPreview(q) {
-  const p = q.pr;
-  const priceRows = [
-    ["Ex-Showroom Price", p.exS],
-    ["Accessories", p.accT],
-    ["TCS @ 1%", p.tcsA],
-    ["Insurance", p.ins],
-    ["RTO & Registration", p.rto],
-    ["Handling / Logistics", p.hand],
-    ["FASTag", p.fastag||400],
+function buildPreviewHTML(q) {
+  const p=q.pr;
+  const rows=[
+    ["Ex-Showroom Price",p.exS],["Toyota Genuine Accessories",p.tga],
+    ["T-Gloss",p.tgloss],["T-Smile",p.tsmile],
+    ["Extended Warranty"+(p.ewDuration?" ("+p.ewDuration+")":""),p.ew],
+    ["TCS @ 1%",p.tcsA],["EPC @ 1%",p.epcA],
+    [q.reg?.state==="Haryana"?"RTO & Registration":"Temp. Registration",p.rto],
+    [p.insuranceType||"Insurance",p.ins],
+    ["HSRP Garnish",p.hsrp],["FASTag",p.fastag],["Other Charges",p.other],
   ].filter(([,v])=>v>0);
-
-  document.getElementById("preview-body").innerHTML = `
-    <div class="quote-doc">
+  return `
+    <div class="quote-doc" id="quote-print-area">
       <div class="qdoc-header">
         <div>
           <div class="qdoc-dealer">PLANET TOYOTA</div>
@@ -787,46 +1075,59 @@ function renderPreview(q) {
             <div class="qdoc-cell-primary">${q.cust.name||"—"}</div>
             <div class="qdoc-cell-secondary">${q.cust.phone||""}</div>
             <div class="qdoc-cell-secondary">${q.cust.city||""}</div>
+            <div class="qdoc-cell-secondary">${q.reg?.state||""}</div>
           </div>
           <div class="qdoc-cell">
             <div class="qdoc-cell-label">VEHICLE</div>
             <div class="qdoc-cell-primary">${q.veh.model||"—"}</div>
             <div class="qdoc-cell-secondary">${q.veh.variant||""}</div>
-            <div class="qdoc-cell-accent">${q.veh.color||""}</div>
+            <div class="qdoc-cell-accent">${q.veh.colour||""}${q.veh.interior?" · "+q.veh.interior+" Int.":""}</div>
+            <div style="margin-top:6px;background:#f0f0f0;border-radius:6px;padding:4px 8px;display:inline-block;">
+              <span style="font-size:9px;color:#888">SUFFIX</span>
+              <span style="font-size:13px;font-weight:700;font-family:monospace;margin-left:6px">${q.veh.suffix||"—"}</span>
+            </div>
           </div>
         </div>
-
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;">
+          <span style="background:#f0f0f0;padding:4px 10px;border-radius:6px">Mfg. Year: <strong>${q.mfgYear||"—"}</strong></span>
+          <span style="background:#f0f0f0;padding:4px 10px;border-radius:6px">Reg: <strong>${q.reg?.type||"—"}</strong></span>
+          ${q.hypothecation?`<span style="background:#e8f0fe;padding:4px 10px;border-radius:6px">Hyp: <strong>${q.hypothecation}</strong></span>`:""}
+        </div>
         <div class="qdoc-section-label">PRICE BREAKUP</div>
         <div class="qdoc-breakdown">
-          ${priceRows.map(([l,v])=>`<div class="qdoc-price-row"><span>${l}</span><span>${formatINR(v)}</span></div>`).join("")}
-          ${p.disc>0?`<div class="qdoc-price-row disc"><span>Discount / Offer</span><span>−${formatINR(p.disc)}</span></div>`:""}
+          ${rows.map(([l,v])=>`<div class="qdoc-price-row"><span>${l}</span><span>${formatINR(v)}</span></div>`).join("")}
+          ${discAmt>0?`<div class="qdoc-price-row" style="color:#1a8a4a"><span>Discount / Offer</span><span>− ${formatINR(discAmt)}</span></div>`:""}
           <div class="qdoc-total-row"><span>On-Road Price</span><span>${formatINR(p.orp)}</span></div>
         </div>
 
-        ${p.accs?.length ? `
-          <div class="qdoc-section-label">ACCESSORIES INCLUDED</div>
-          <div style="margin-bottom:12px">
-            ${p.accs.map(a=>`<div class="qdoc-acc-row"><span>• ${a.name}</span><span>${formatINR(a.price)}</span></div>`).join("")}
-          </div>` : ""}
-
-        ${q.fin?.bank ? `
-          <div class="qdoc-finance">
-            <div class="qdoc-section-label">FINANCE DETAILS</div>
-            <div class="qdoc-finance-grid">
-              <div><span>Bank: </span>${q.fin.bank}</div>
-              <div><span>Loan: </span>${formatINR(q.fin.loan)}</div>
-              <div><span>Down Pmt: </span>${formatINR(q.fin.down)}</div>
-              <div><span>Tenure: </span>${q.fin.ten} months</div>
-            </div>
-          </div>` : ""}
-
-        ${q.notes ? `<div class="qdoc-note"><strong>Note:</strong> ${q.notes}</div>` : ""}
-
         <div class="qdoc-footer">
           <div>
-            <div class="qdoc-cell-label">PREPARED BY</div>
-            <div class="qdoc-footer-exec">${q.exec||"Planet Toyota"}</div>
-            <div class="qdoc-footer-sub">Planet Toyota · Narnaul · Authorised Dealer</div>
+            ${(()=>{
+              const staff=getStaff();
+              const execUser=staff.find(s=>s.name===q.exec);
+              const role=execUser?.role||ROLE.EXEC;
+              const seniorRoles=[ROLE.OWNER,ROLE.GM,ROLE.SM];
+              if(seniorRoles.includes(role)){
+                return `<div class="qdoc-cell-label">CONTACT</div>
+                  <div class="qdoc-footer-exec">Planet Toyota, Narnaul</div>
+                  <div class="qdoc-footer-sub">Authorised Toyota Kirloskar Motor Dealer</div>`;
+              } else if(role===ROLE.TL){
+                const mobile=execUser?.mobile||"";
+                return `<div class="qdoc-cell-label">TEAM LEADER / CONTACT</div>
+                  <div class="qdoc-footer-exec">${q.exec}</div>
+                  ${mobile?`<div class="qdoc-footer-sub">📞 ${mobile}</div>`:""}
+                  <div class="qdoc-footer-sub">Planet Toyota, Narnaul</div>`;
+              } else {
+                const tlUser=staff.find(s=>s.role===ROLE.TL&&s.teamId===execUser?.teamId);
+                const execMobile=execUser?.mobile||"";
+                const tlMobile=tlUser?.mobile||"";
+                return `<div class="qdoc-cell-label">SALES EXECUTIVE</div>
+                  <div class="qdoc-footer-exec">${q.exec}</div>
+                  ${execMobile?`<div class="qdoc-footer-sub">📞 ${execMobile}</div>`:""}
+                  ${tlUser?`<div class="qdoc-footer-sub" style="margin-top:6px;padding-top:6px;border-top:0.5px solid #eee"><span style="font-size:10px;color:#aaa;display:block;margin-bottom:2px">TEAM LEADER</span>${tlUser.name}${tlMobile?" · 📞 "+tlMobile:""}</div>`:""}
+                  <div class="qdoc-footer-sub" style="margin-top:4px">Planet Toyota, Narnaul</div>`;
+              }
+            })()}
             <div class="qdoc-footer-sub">Valid 7 days · Prices subject to change</div>
           </div>
           <div class="qdoc-sig">
@@ -835,193 +1136,82 @@ function renderPreview(q) {
           </div>
         </div>
       </div>
-    </div>
+    </div>`;
+}
 
+function renderPreview(q) {
+  const shareUrl=`${APP_BASE_URL}/quote.html?id=${q.id}`;
+  document.getElementById("preview-body").innerHTML=`
+    ${buildPreviewHTML(q)}
     <div class="no-print">
-      <button class="btn-primary" onclick="window.print()">🖨️ Print / Save as PDF</button>
-      <button class="btn-whatsapp" onclick="shareWA()">📲 Share via WhatsApp</button>
+      <button class="btn-primary" onclick="savePDF()">🖨️ Save as PDF</button>
+      <button class="btn-whatsapp" onclick="shareWALink('${q.id}')">📲 Share Link on WhatsApp</button>
+      <div style="background:#f0f4ff;border-radius:10px;padding:10px 14px;margin-top:10px;font-size:12px;color:#334">
+        <strong>PDF steps:</strong> Tap "Save as PDF" → In print dialog select "Save as PDF" → Open in Files → Share to WhatsApp
+      </div>
       <div class="btn-row">
-        <button class="btn-outline" onclick="goTo('home')">All Quotes</button>
+        <button class="btn-outline" onclick="${[ROLE.OWNER,ROLE.GM,ROLE.SM,ROLE.TL].includes(currentUser?.role)?"goTo('dashboard')":"goTo('home')"}">← Back</button>
         <button class="btn-outline" onclick="initFormState();goTo('form')">+ New Quote</button>
       </div>
     </div>
     <div style="height:24px"></div>`;
 }
 
-function shareWA() {
-  const q = currentQuote;
-  if (!q) return;
-  const p = q.pr;
-  const lines = [
-    `🚗 *Planet Toyota – Vehicle Quotation*`,
-    ``,
-    `Quote No: *${q.id}*   Date: ${q.date}`,
-    ``,
-    `👤 *Customer:* ${q.cust.name}`,
-    `📞 ${q.cust.phone}${q.cust.city?` · ${q.cust.city}`:""}`,
-    ``,
-    `🚗 *Vehicle:* ${q.veh.model}`,
-    `   Variant: ${q.veh.variant}`,
-    `   Colour: ${q.veh.color}`,
-    ``,
-    `*💰 Price Breakup:*`,
-    `Ex-Showroom:  ${formatINR(p.exS)}`,
-    p.accT>0?`Accessories:  ${formatINR(p.accT)}`:"",
-    p.tcsA>0?`TCS (1%):     ${formatINR(p.tcsA)}`:"",
-    p.ins>0?`Insurance:    ${formatINR(p.ins)}`:"",
-    p.rto>0?`RTO:          ${formatINR(p.rto)}`:"",
-    p.hand>0?`Handling:     ${formatINR(p.hand)}`:"",
-    `FASTag:       ${formatINR(p.fastag||400)}`,
-    p.disc>0?`Discount:    −${formatINR(p.disc)}`:"",
-    ``,
-    `*On-Road Price: ${formatINR(p.orp)}*`,
-    ``,
-    q.fin?.bank?`🏦 Finance: ${q.fin.bank} · ${q.fin.ten}m · Down: ${formatINR(q.fin.down)}`:"",
-    q.notes?`📌 Note: ${q.notes}`:"",
-    ``,
-    `_Valid for 7 days from issue date_`,
-    `_Sales Executive: ${q.exec}_`,
-    ``,
-    `🏪 *Planet Toyota, Narnaul*`,
-    `_Authorised Toyota Kirloskar Motor Dealer_`,
-    `_Mahendragarh, Haryana_`,
-  ].filter(l=>l!=="").join("\n");
-  window.open(`https://wa.me/?text=${encodeURIComponent(lines)}`, "_blank");
-}
+function savePDF() { window.print(); }
 
-// ============================================================
-// MANAGER DASHBOARD
-// ============================================================
-function renderManager() {
-  const all = loadQuotes();
-  const now = new Date();
-
-  // Filter
-  let filtered = all;
-  if (mgrFilter !== "all") {
-    if (mgrFilter === "today") {
-      const td = now.toDateString();
-      filtered = all.filter(q => new Date(q.savedAt||0).toDateString() === td);
-    } else if (mgrFilter === "month") {
-      filtered = all.filter(thisMonth);
-    } else {
-      filtered = all.filter(q => q.exec === mgrFilter);
-    }
+function shareWALink(id) {
+  const q=loadQuotes().find(x=>x.id===id); if(!q) return;
+  const staff=getStaff();
+  const execUser=staff.find(s=>s.name===q.exec);
+  const tlUser=staff.find(s=>s.role===ROLE.TL&&s.teamId===execUser?.teamId);
+  const seniorRoles=[ROLE.OWNER,ROLE.GM,ROLE.SM];
+  const isSenior=seniorRoles.includes(execUser?.role);
+  const url=`${APP_BASE_URL}/quote.html?id=${id}`;
+  let contactLine="";
+  if(!isSenior){
+    const execMobile=execUser?.mobile||"";
+    const tlMobile=tlUser?.mobile||"";
+    contactLine=`\n\n👤 *Sales Executive:* ${q.exec}${execMobile?" · 📞 "+execMobile:""}`;
+    if(tlUser) contactLine+=`\n👤 *Team Leader:* ${tlUser.name}${tlMobile?" · 📞 "+tlMobile:""}`;
   }
-
-  // Stats
-  const totalORP = filtered.reduce((s,q)=>s+(q.pr?.orp||0),0);
-  const avgORP = filtered.length ? Math.round(totalORP/filtered.length) : 0;
-  const todayCount = all.filter(q=>new Date(q.savedAt||0).toDateString()===now.toDateString()).length;
-  const monthCount = all.filter(thisMonth).length;
-
-  // Executive breakdown
-  const execMap = {};
-  all.forEach(q => {
-    const e = q.exec||"Unknown";
-    if (!execMap[e]) execMap[e] = { count:0, value:0 };
-    execMap[e].count++;
-    execMap[e].value += q.pr?.orp||0;
-  });
-  const execRows = Object.entries(execMap).sort((a,b)=>b[1].value-a[1].value);
-  const maxVal = execRows[0]?.[1]?.value || 1;
-
-  // Sync status
-  const hasSheetsConfig = GOOGLE_SHEETS_WEBHOOK && GOOGLE_SHEETS_WEBHOOK.length > 0;
-
-  const filterLabels = [["all","All Time"],["today","Today"],["month","This Month"],...EXECUTIVES.map(e=>[e.name,e.name.split(" ")[0]])];
-
-  document.getElementById("manager-body").innerHTML = `
-    <div class="sync-status">
-      <div class="sync-dot${hasSheetsConfig?"":" pending"}"></div>
-      <span>${hasSheetsConfig ? "Google Sheets sync active" : "Google Sheets not configured (see SETUP.md)"}</span>
-    </div>
-
-    <div class="mgr-stats">
-      <div class="mgr-stat"><div class="mgr-stat-v">${all.length}</div><div class="mgr-stat-l">Total Quotes</div></div>
-      <div class="mgr-stat"><div class="mgr-stat-v">${monthCount}</div><div class="mgr-stat-l">This Month</div></div>
-      <div class="mgr-stat"><div class="mgr-stat-v">${todayCount}</div><div class="mgr-stat-l">Today</div></div>
-      <div class="mgr-stat"><div class="mgr-stat-v">${totalORP>=1e7?`₹${(totalORP/1e7).toFixed(1)}Cr`:totalORP>=1e5?`₹${(totalORP/1e5).toFixed(0)}L`:`₹${Math.round(totalORP/1000)}K`}</div><div class="mgr-stat-l">Total Pipeline</div></div>
-    </div>
-
-    <div class="section-label">EXECUTIVE PERFORMANCE</div>
-    ${execRows.map(([name,d])=>`
-      <div class="mgr-exec-row">
-        <div class="mgr-exec-name">${name}</div>
-        <div class="mgr-bar-wrap">
-          <div class="mgr-bar-track"><div class="mgr-bar-fill" style="width:${Math.round(d.value/maxVal*100)}%"></div></div>
-        </div>
-        <div class="mgr-exec-meta">
-          <span>${d.count} quote${d.count!==1?"s":""}</span>
-          <span class="mgr-exec-value">${formatINR(d.value)}</span>
-        </div>
-      </div>`).join("")}
-
-    <div class="section-label" style="margin-top:18px">FILTER & VIEW ALL</div>
-    <div class="mgr-filter-row">
-      ${filterLabels.map(([v,l])=>`<button class="mgr-filter${mgrFilter===v?" active":""}" onclick="mgrFilter='${v}';renderManager()">${l}</button>`).join("")}
-    </div>
-
-    <div class="mgr-all-quotes">
-      ${filtered.length===0?`<div class="empty-state">No quotes in this filter.</div>`:
-        filtered.map(q=>`
-          <div class="qcard" onclick="openMgrQuote('${q.id}')">
-            <div class="qcard-top"><span class="qcard-name">${q.cust?.name||"—"}</span><span class="qcard-date">${q.date||""}</span></div>
-            <div class="qcard-vehicle">${q.veh?.model||""} · ${q.veh?.variant||""}</div>
-            <div class="qcard-bottom">
-              <span class="qcard-exec">${q.exec||"—"}</span>
-              <span class="qcard-price">${formatINR(q.pr?.orp)}</span>
-            </div>
-          </div>`).join("")}
-    </div>
-    <div style="height:28px"></div>`;
-}
-
-function openMgrQuote(id) {
-  const q = loadQuotes().find(x=>x.id===id);
-  if (!q) return;
-  currentQuote = q;
-  document.getElementById("preview-title").textContent = `#${q.id}`;
-  renderPreview(q);
-  goTo("preview");
+  const msg=`🚗 *Planet Toyota – Quotation*\n\nDear ${q.cust?.name||"Customer"},\n\nPlease find your vehicle quotation below:\n\n📄 *${q.veh?.model||""}*\n*Quote No:* ${id}\n*On-Road Price:* ${formatINR(q.pr?.orp)}\n\n👉 *View Full Quotation:*\n${url}${contactLine}\n\n_Valid 7 days · Planet Toyota, Narnaul_\n_Authorised Toyota Kirloskar Motor Dealer_`;
+  window.open(`https://wa.me/${q.cust?.phone?q.cust.phone:""}?text=${encodeURIComponent(msg)}`,"_blank");
 }
 
 // ============================================================
 // GOOGLE SHEETS SYNC
 // ============================================================
 async function syncToSheets(q) {
-  if (!GOOGLE_SHEETS_WEBHOOK) return;
+  if(!SHEETS_URL) return;
   try {
-    const payload = {
-      id: q.id, date: q.date, exec: q.exec,
-      customerName: q.cust.name, customerPhone: q.cust.phone, customerCity: q.cust.city,
-      model: q.veh.model, variant: q.veh.variant, color: q.veh.color,
-      exShowroom: q.pr.exS, accessories: q.pr.accT, tcs: q.pr.tcsA,
-      insurance: q.pr.ins, rto: q.pr.rto, handling: q.pr.hand,
-      fastag: q.pr.fastag||400, discount: q.pr.disc, onRoadPrice: q.pr.orp,
-      financeBank: q.fin?.bank||"", loanAmount: q.fin?.loan||0,
-      tenure: q.fin?.ten||0, downPayment: q.fin?.down||0,
-      notes: q.notes||"",
+    const payload={
+      action:"saveQuote",id:q.id,date:q.date,mfgYear:q.mfgYear,exec:q.exec,
+      customerName:q.cust.name,customerPhone:q.cust.phone,customerCity:q.cust.city,
+      model:q.veh.model,variant:q.veh.variant,fuelType:q.veh.fuelType,
+      colour:q.veh.colour,interior:q.veh.interior,suffixCode:q.veh.suffix,
+      regType:q.reg?.type,customerState:q.reg?.state,
+      exShowroom:q.pr.exS,tga:q.pr.tga,tgloss:q.pr.tgloss,tsmile:q.pr.tsmile,
+      ewDuration:q.pr.ewDuration,ewPrice:q.pr.ew,
+      epc:q.pr.epcA,tcs:q.pr.tcsA,hsrp:q.pr.hsrp,fastag:q.pr.fastag,
+      insuranceType:q.pr.insuranceType,insurance:q.pr.ins,
+      rto:q.pr.rto,handling:0,discount:q.pr.disc||q.pr.discount||0,otherCharges:q.pr.other,onRoadPrice:q.pr.orp,
+      hypothecation:q.hypothecation,notes:q.notes
     };
-    const resp = await fetch(GOOGLE_SHEETS_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (resp.ok) toast("☁️ Synced to Google Sheets");
-    else toast("⚠️ Sheet sync failed — saved locally");
-  } catch {
-    toast("📴 Offline — saved locally");
-  }
+    const resp=await fetch(SHEETS_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    if(resp.ok) toast("☁️ Synced to Google Sheets"); else toast("⚠️ Sync failed — saved locally");
+  } catch { toast("📴 Offline — saved locally"); }
 }
 
 // ============================================================
 // INIT
 // ============================================================
-window.addEventListener("DOMContentLoaded", () => {
-  initLogin();
-  goTo("login");
-});
+window.addEventListener("DOMContentLoaded",()=>{initLogin();goTo("login");});
+const _origRD = renderDashboard;
+renderDashboard = function() {
+  _origRD();
+  const el = document.getElementById("dash-role-label");
+  if(el && currentUser) el.textContent = currentUser.role;
+};
 </script>
 </body>
 </html>
