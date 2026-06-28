@@ -604,6 +604,103 @@ body {
 
 /* ── SCAN ANIMATION ──────────────────────────────────────────────── */
 @keyframes scanAnim { 0%{top:4px} 50%{top:calc(100% - 6px)} 100%{top:4px} }
+
+/* ── MODEL DRILL-DOWN ────────────────────────────────────────── */
+.model-drill-overlay { position: fixed; inset: 0; background: rgba(15,17,23,0.55); backdrop-filter: blur(4px); display: none; align-items: flex-end; justify-content: center; z-index: 450; }
+.model-drill-overlay.show { display: flex; }
+.model-drill-sheet { background: var(--gray-100); border-radius: 24px 24px 0 0; width: 100%; max-height: 88vh; display: flex; flex-direction: column; animation: slideUp 0.25s cubic-bezier(0.32,0.72,0,1); }
+.model-drill-header { background: white; border-radius: 24px 24px 0 0; padding: 18px 20px 14px; border-bottom: 1px solid var(--gray-200); flex-shrink: 0; }
+.model-drill-handle { width: 40px; height: 4px; background: var(--gray-200); border-radius: 2px; margin: 0 auto 14px; }
+.model-drill-title { font-size: 20px; font-weight: 900; color: var(--dark); letter-spacing: -0.5px; }
+.model-drill-sub   { font-size: 13px; color: var(--gray-400); margin-top: 4px; font-weight: 500; }
+.model-drill-body  { overflow-y: auto; padding: 14px 16px 44px; flex: 1; }
+
+/* Total strip */
+.model-total-strip { background: var(--dark); border-radius: var(--radius-sm); padding: 14px 18px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+.mts-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.8px; }
+.mts-num   { font-size: 36px; font-weight: 900; color: white; letter-spacing: -1.5px; }
+
+/* Variant card */
+.variant-card { background: white; border-radius: var(--radius); padding: 16px; margin-bottom: 12px; border: 1px solid var(--gray-200); box-shadow: var(--shadow-sm); }
+.vc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--gray-100); }
+.vc-name   { font-size: 15px; font-weight: 800; color: var(--dark); letter-spacing: -0.2px; }
+.vc-total  { background: var(--red); color: white; font-size: 13px; font-weight: 800; padding: 4px 12px; border-radius: 20px; }
+
+/* Colour rows inside variant card */
+.colour-row { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--gray-50); }
+.colour-row:last-child { border-bottom: none; }
+.colour-left  { display: flex; align-items: center; gap: 10px; }
+.colour-swatch { width: 28px; height: 28px; border-radius: 8px; border: 2px solid var(--gray-200); flex-shrink: 0; }
+.colour-name  { font-size: 13px; font-weight: 600; color: var(--gray-800); }
+.colour-count-wrap { display: flex; align-items: center; gap: 8px; }
+.colour-count { font-size: 18px; font-weight: 900; color: var(--dark); letter-spacing: -0.5px; }
+.colour-bar   { width: 60px; height: 5px; background: var(--gray-100); border-radius: 3px; overflow: hidden; }
+.colour-bar-fill { height: 100%; background: linear-gradient(90deg, var(--red), #FF4D5E); border-radius: 3px; }
+
+/* Location pills in colour row */
+.colour-locs  { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.colour-loc-pill { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+/* Fuel type badge */
+.fuel-badge { font-size: 10px; font-weight: 600; color: var(--gray-400); background: var(--gray-100); padding: 2px 8px; border-radius: 10px; margin-left: 6px; }
+
+
+/* ── TRAILER ENTRY ───────────────────────────────────────────── */
+.trailer-screen { position: fixed; inset: 0; background: var(--gray-100); z-index: 800; display: none; flex-direction: column; overflow: hidden; }
+.trailer-screen.show { display: flex; }
+.trailer-header { background: var(--green); padding: 14px 16px; flex-shrink: 0; display: flex; align-items: center; gap: 12px; }
+.trailer-header h2 { color: white; font-size: 17px; font-weight: 800; }
+.trailer-back { background: rgba(255,255,255,0.2); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.trailer-body { overflow-y: auto; padding: 16px; flex: 1; padding-bottom: 100px; }
+
+/* Step indicators */
+.step-bar { display: flex; align-items: center; gap: 0; margin-bottom: 20px; }
+.step-item { flex: 1; text-align: center; }
+.step-num  { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; margin: 0 auto 4px; border: 2px solid var(--gray-200); background: white; color: var(--gray-400); }
+.step-num.active   { background: var(--green); border-color: var(--green); color: white; }
+.step-num.done     { background: var(--green); border-color: var(--green); color: white; }
+.step-label { font-size: 10px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; }
+.step-label.active { color: var(--green); }
+.step-line  { flex: 1; height: 2px; background: var(--gray-200); margin-top: -18px; }
+.step-line.done { background: var(--green); }
+
+/* Vehicle list in trailer */
+.trailer-veh-item { background: white; border-radius: var(--radius-sm); padding: 14px; margin-bottom: 10px; border: 1px solid var(--gray-200); position: relative; }
+.tvi-num    { position: absolute; top: 12px; right: 12px; background: var(--green); color: white; font-size: 11px; font-weight: 800; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.tvi-model  { font-size: 14px; font-weight: 700; color: var(--dark); }
+.tvi-detail { font-size: 12px; color: var(--gray-400); margin-top: 3px; }
+.tvi-chassis { font-size: 11px; font-family: monospace; color: var(--gray-600); margin-top: 4px; letter-spacing: 1px; }
+.tvi-remove { background: var(--red-soft); color: var(--red); border: none; border-radius: var(--radius-xs); padding: 5px 10px; font-size: 11px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+
+/* Add vehicle form inside trailer */
+.add-veh-form { background: var(--gray-50); border-radius: var(--radius-sm); border: 2px dashed var(--gray-200); padding: 16px; margin-bottom: 14px; }
+.add-veh-form.active { border-color: var(--green); background: white; }
+.avf-title { font-size: 13px; font-weight: 700; color: var(--dark); margin-bottom: 12px; }
+
+/* Source toggle */
+.source-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+.source-btn { flex: 1; padding: 12px; border: 2px solid var(--gray-200); border-radius: var(--radius-sm); background: white; font-size: 13px; font-weight: 700; cursor: pointer; text-align: center; color: var(--gray-600); transition: all 0.15s; }
+.source-btn.selected { border-color: var(--green); background: var(--green-soft); color: var(--green); }
+
+/* Arrival mode toggle */
+.mode-toggle { display: flex; gap: 8px; margin-bottom: 14px; }
+.mode-btn { flex: 1; padding: 14px 10px; border: 2px solid var(--gray-200); border-radius: var(--radius-sm); background: white; cursor: pointer; text-align: center; transition: all 0.15s; }
+.mode-btn.selected { border-color: var(--green); background: var(--green-soft); }
+.mode-icon  { font-size: 24px; margin-bottom: 4px; }
+.mode-label { font-size: 13px; font-weight: 700; color: var(--gray-800); }
+.mode-sub   { font-size: 10px; color: var(--gray-400); margin-top: 2px; }
+.mode-btn.selected .mode-label { color: var(--green); }
+
+/* Trailer summary card */
+.trailer-summary { background: linear-gradient(135deg, #064E3B 0%, #065F46 100%); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; color: white; }
+.ts-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+.ts-value { font-size: 15px; font-weight: 700; color: white; }
+.ts-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.ts-item  { }
+
+/* Fixed bottom bar for trailer */
+.trailer-bottom { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--gray-200); padding: 12px 16px; display: flex; gap: 10px; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); z-index: 801; }
+
 </style>
 </head>
 <body>
@@ -774,6 +871,32 @@ body {
       <div class="modal-handle"></div>
       <div class="modal-title">🚛 New TKM Arrival — Gate Entry</div>
       <div class="alert alert-info" style="margin-bottom:14px">Gate entry timestamp will be recorded automatically.</div>
+
+      <div class="input-group">
+        <label class="input-label">Arrival Mode *</label>
+        <div class="mode-toggle">
+          <div class="mode-btn selected" id="geMode_drivedown" onclick="selectGeMode('drivedown')">
+            <div class="mode-icon">🚗</div>
+            <div class="mode-label">Drive Down</div>
+            <div class="mode-sub">Single vehicle</div>
+          </div>
+          <div class="mode-btn" id="geMode_trailer" onclick="openTrailerEntry()">
+            <div class="mode-icon">🚛</div>
+            <div class="mode-label">Trailer</div>
+            <div class="mode-sub">Multiple vehicles</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Source *</label>
+        <div class="source-toggle">
+          <div class="source-btn selected" id="geSource_tkm" onclick="selectGeSource('TKM')">TKM</div>
+          <div class="source-btn" id="geSource_codealer" onclick="selectGeSource('Co-Dealer')">Co-Dealer</div>
+        </div>
+        <input class="input-field" id="geCoDealerName" type="text" placeholder="Co-dealer name and city"
+          style="display:none;margin-top:8px">
+      </div>
       <div class="input-group">
         <label class="input-label">Chassis No. *</label>
         <div class="input-with-btn">
@@ -1259,6 +1382,8 @@ function bootApp() {
   document.addEventListener('click', resetSessionTimer);
   // Request notification permission
   requestNotificationPermission();
+  // Load any saved in-transit vehicles from previous session
+  loadSavedTransits();
   // Start online status monitoring
   updateOnlineStatus();
   // Reset shift stats for new session
@@ -1317,9 +1442,9 @@ function switchTab(tab) {
   const subs = { log:'Log Movement', receive:'Receive Vehicle', dash:'Live Dashboard', stock:'Stock Search' };
   document.getElementById('headerSub').textContent = subs[tab] || 'Vehicle Tracker';
 
-  if (tab === 'dash')    loadDashboard();
+  if (tab === 'dash')    { loadDashboard(); checkServerTransitAlerts(); }
   if (tab === 'stock')   loadStock();
-  if (tab === 'receive') loadPendingTransits();
+  if (tab === 'receive') { loadPendingTransits(); checkServerTransitAlerts(); }
 }
 
 // ── SUFFIX DATA ───────────────────────────────────────────────────
@@ -1467,7 +1592,8 @@ function confirmScan() {
   const chassis = parseChassis(detectedRaw);
   stopScan();
   if (scanMode === 'receive') { document.getElementById('rcvChassisInput').value = chassis; findTransit(chassis); }
-  else if (scanMode === 'gate') { document.getElementById('geChassis').value = chassis; validateChassisFormat('geChassis','geChassisErr'); stopScan(); }
+  else if (scanMode === 'gate')    { document.getElementById('geChassis').value = chassis; validateChassisFormat('geChassis','geChassisErr'); stopScan(); }
+  else if (scanMode === 'trailer') { document.getElementById('tvChassis').value = chassis; validateChassisFormat('tvChassis','tvChassisErr'); stopScan(); }
   else { document.getElementById('chassisInput').value = chassis; findChassis(chassis); }
 }
 
@@ -1595,7 +1721,7 @@ async function registerVehicle() {
   if (!recvBy) { showErr('nfError','⚠️ Please enter who received this vehicle.'); return; }
   clearErr('nfError'); showLoader('Registering vehicle...');
   try {
-    await postAPI({ action:'addNewVehicle', chassis:vehicle.chassis, model, variant, fuel, colour, interior, suffix, dispatch,
+    await postAPIWithQueue({ action:'addNewVehicle', chassis:vehicle.chassis, model, variant, fuel, colour, interior, suffix, dispatch,
       receivedBy:recvBy, location:'Stockyard', status:'In Stock', arrival:new Date().toISOString().split('T')[0], timestamp:new Date().toISOString(), gateEntry:false });
     hideLoader();
     showSuccess('🚗','Vehicle Registered!','Added to Vehicle Master & logged in Movement Log.',[
@@ -1677,6 +1803,7 @@ async function confirmReceipt() {
       from:rcvVehicle.transitFrom, staff, driverName, remarks, timestamp:new Date().toISOString() });
     // Cancel transit alert if received
     if (transitAlertTimer) { clearTimeout(transitAlertTimer); transitAlertTimer = null; }
+    clearTransitAlert(rcvVehicle.chassis);
     shiftStats.movements++; shiftStats.received++;
     shiftMovements.push({ time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}), model:rcvVehicle.model+' '+rcvVehicle.variant, chassis:rcvVehicle.chassis, from:rcvVehicle.transitFrom, to:rcvVehicle.transitTo||rcvVehicle.location, action:'Received', driver:driverName });
     hideLoader(); resetReceive();
@@ -1756,10 +1883,13 @@ async function loadDashboard() {
     if (d.models && d.models.length) {
       const max = Math.max(...d.models.map(m => m.count));
       mEl.innerHTML = d.models.map(m => `
-        <div class="model-row">
+        <div class="model-row" onclick="openModelDrill('${m.model}')" style="cursor:pointer;transition:background 0.12s;border-radius:8px;padding:4px 6px;margin:-4px -6px;">
           <div class="model-name">${m.model}</div>
           <div class="model-bar-wrap"><div class="model-bar" style="width:${max>0?Math.round(m.count/max*100):0}%"></div></div>
-          <div class="model-count">${m.count}</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="model-count">${m.count}</div>
+            <span style="font-size:14px;color:var(--gray-300)">›</span>
+          </div>
         </div>`).join('');
     } else { mEl.innerHTML = '<div class="empty-state"><div class="e-icon">🚗</div><div class="e-text">No stock data</div></div>'; }
     if (d.overdueTransits && d.overdueTransits.length) {
@@ -2340,9 +2470,12 @@ async function syncOfflineQueue() {
 }
 
 // ════════════════════════════════════════════════════════════════
-// PUSH NOTIFICATION — 30 min In Transit alert
+// TRANSIT ALERT SYSTEM — 30 min overdue check
+// Works via: 1) in-app banner  2) browser notification  3) dashboard check
 // ════════════════════════════════════════════════════════════════
-let transitAlertTimer = null;
+let transitAlertTimer  = null;
+let activeTransits     = {}; // { chassis: { model, from, to, dispatchedAt } }
+let alertShownFor      = new Set(); // track which chassis already alerted
 
 async function requestNotificationPermission() {
   if ('Notification' in window && Notification.permission === 'default') {
@@ -2350,20 +2483,114 @@ async function requestNotificationPermission() {
   }
 }
 
-function sendTransitNotification(model, chassis, from, to) {
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification('Planet Toyota — Transit Alert', {
-      body: model + ' (' + chassis + ') dispatched from ' + from + ' to ' + to + ' — 30 mins elapsed. Not yet received.',
-      icon: ''
-    });
-  }
+function scheduleTransitAlert(model, chassis, from, to) {
+  const dispatchedAt = Date.now();
+  // Store in activeTransits + localStorage so it survives reload
+  activeTransits[chassis] = { model, from, to, dispatchedAt };
+  localStorage.setItem('pt_active_transits', JSON.stringify(activeTransits));
+  startTransitChecks();
 }
 
-function scheduleTransitAlert(model, chassis, from, to) {
-  if (transitAlertTimer) clearTimeout(transitAlertTimer);
-  transitAlertTimer = setTimeout(function() {
-    sendTransitNotification(model, chassis, from, to);
-  }, 30 * 60 * 1000); // 30 minutes
+function loadSavedTransits() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('pt_active_transits') || '{}');
+    activeTransits = saved;
+    if (Object.keys(activeTransits).length > 0) startTransitChecks();
+  } catch(e) {}
+}
+
+function clearTransitAlert(chassis) {
+  delete activeTransits[chassis];
+  alertShownFor.delete(chassis);
+  localStorage.setItem('pt_active_transits', JSON.stringify(activeTransits));
+}
+
+// Check every 60 seconds if any transit is overdue
+let transitCheckInterval = null;
+function startTransitChecks() {
+  if (transitCheckInterval) return; // already running
+  transitCheckInterval = setInterval(checkOverdueTransits, 60 * 1000);
+  checkOverdueTransits(); // check immediately
+}
+
+function checkOverdueTransits() {
+  const THIRTY_MIN = 30 * 60 * 1000;
+  const now        = Date.now();
+  let   anyOverdue = false;
+
+  Object.entries(activeTransits).forEach(([chassis, t]) => {
+    const elapsed = now - t.dispatchedAt;
+    if (elapsed >= THIRTY_MIN && !alertShownFor.has(chassis)) {
+      alertShownFor.add(chassis);
+      anyOverdue = true;
+
+      // 1. Browser notification
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Planet Toyota — Transit Overdue!', {
+          body: t.model + ' (' + chassis + ') dispatched from ' + t.from + ' to ' + t.to + ' — 30+ mins, not yet received.',
+          tag:  'transit-' + chassis,
+          renotify: true
+        });
+      }
+
+      // 2. In-app banner
+      showTransitOverdueBanner(t.model, chassis, t.from, t.to, Math.floor(elapsed / 60000));
+    }
+  });
+}
+
+// Also check against server when dashboard/receive tab loads
+async function checkServerTransitAlerts() {
+  try {
+    const data = JSON.parse(await (await fetch(API + '?action=getPendingTransits')).text());
+    if (!data.success || !data.transits) return;
+    const THIRTY_MIN = 30 * 60 * 1000;
+    const overdue    = data.transits.filter(t => {
+      if (!t.timestamp) return false;
+      return (Date.now() - new Date(t.timestamp).getTime()) >= THIRTY_MIN;
+    });
+    if (overdue.length > 0) {
+      overdue.forEach(t => {
+        if (!alertShownFor.has(t.chassis)) {
+          alertShownFor.add(t.chassis);
+          const elapsed = Math.floor((Date.now() - new Date(t.timestamp).getTime()) / 60000);
+          showTransitOverdueBanner(t.model, t.chassis, t.from, t.to, elapsed);
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Planet Toyota — Transit Overdue!', {
+              body: t.model + ' (' + t.chassis + ') — ' + elapsed + ' mins in transit, not yet received.',
+              tag: 'transit-' + t.chassis, renotify: true
+            });
+          }
+        }
+      });
+    }
+  } catch(e) {}
+}
+
+function showTransitOverdueBanner(model, chassis, from, to, mins) {
+  // Create or update overdue banner
+  let banner = document.getElementById('transitOverdueBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'transitOverdueBanner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:3000;';
+    document.body.prepend(banner);
+  }
+  banner.innerHTML = `
+    <div style="background:#EA580C;color:white;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,0.2)">
+      <div>
+        <div style="font-size:12px;font-weight:800;letter-spacing:0.5px">TRANSIT OVERDUE — ${mins} MINUTES</div>
+        <div style="font-size:11px;opacity:0.9;margin-top:2px">${model} (${chassis}) — ${from||'?'} → ${to||'?'}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="switchTab('receive');this.closest('#transitOverdueBanner').remove()"
+          style="background:white;color:#EA580C;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer">
+          RECEIVE
+        </button>
+        <button onclick="this.closest('#transitOverdueBanner').remove()"
+          style="background:rgba(255,255,255,0.2);color:white;border:none;border-radius:8px;padding:6px 10px;font-size:14px;cursor:pointer">✕</button>
+      </div>
+    </div>`;
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2410,7 +2637,10 @@ function openGateEntry() {
   document.getElementById('geChassisErr').textContent = '';
   document.getElementById('geError').innerHTML = '';
   // Reset location selection — default to Stockyard
-  geSelectedLoc = 'Stockyard';
+  geSelectedLoc    = 'Stockyard';
+  geSelectedSource = 'TKM';
+  geSelectedMode   = 'drivedown';
+  selectGeSource('TKM');
   ['Stockyard','Workshop','Showroom'].forEach(l => {
     const btn = document.getElementById('geLoc_' + l);
     if (btn) btn.classList.toggle('selected', l === 'Stockyard');
@@ -2492,6 +2722,9 @@ async function confirmGateEntry() {
       action: 'addNewVehicle', chassis, model, variant, fuel, colour, interior, suffix,
       dispatch, receivedBy: currentUser ? currentUser.name : '',
       driverName: driver, remarks,
+      source: geSelectedSource,
+      coDealerName: geSelectedSource === 'Co-Dealer' ? (document.getElementById('geCoDealerName').value.trim()) : '',
+      arrivalMode: geSelectedMode,
       location: geSelectedLoc, status: 'In Stock',
       arrival: new Date().toISOString().split('T')[0],
       timestamp: new Date().toISOString(),
@@ -2591,6 +2824,521 @@ function openShiftSummary() {
 }
 function closeShiftSummary() { document.getElementById('shiftOverlay').classList.remove('show'); }
 
+
+// ════════════════════════════════════════════════════════════════
+// MODEL DRILL-DOWN — variant + colour breakdown
+// ════════════════════════════════════════════════════════════════
+
+// Colour swatch map — Toyota standard colours
+const COLOUR_SWATCHES = {
+  'white':        '#F5F5F0', 'super white':  '#FFFFFF', 'white pearl':  '#F0EEE8',
+  'silver':       '#C0C0C0', 'grey':         '#808080', 'gray':         '#808080',
+  'black':        '#1A1A1A', 'attitude black':'#111111',
+  'red':          '#CC0000', 'crimson':      '#DC143C',
+  'blue':         '#1E3A8A', 'dark blue':    '#1E3A8A', 'sky blue':     '#87CEEB',
+  'maroon':       '#800000', 'bronze':       '#CD7F32',
+  'orange':       '#EA580C', 'golden':       '#D4AF37',
+  'beige':        '#F5F0DC', 'ivory':        '#FFFFF0',
+  'green':        '#166534', 'dark green':   '#14532D',
+  'brown':        '#78350F',
+};
+
+function getColourSwatch(colourName) {
+  if (!colourName) return '#E5E7EB';
+  const key = colourName.toLowerCase().trim();
+  for (const [k, v] of Object.entries(COLOUR_SWATCHES)) {
+    if (key.includes(k)) return v;
+  }
+  // Generate a consistent colour from the name
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) hash = key.charCodeAt(i) + ((hash << 5) - hash);
+  const h = Math.abs(hash) % 360;
+  return `hsl(${h}, 35%, 60%)`;
+}
+
+function getLocPillStyle(loc) {
+  const styles = {
+    'Stockyard':  'background:#ECFDF5;color:#065F46',
+    'Workshop':   'background:#EFF6FF;color:#1E40AF',
+    'Showroom':   'background:#F5F3FF;color:#5B21B6',
+    'In Transit': 'background:#FFF7ED;color:#C2410C',
+  };
+  return styles[loc] || 'background:#F3F4F6;color:#374151';
+}
+
+function openModelDrill(modelName) {
+  document.getElementById('modelDrillOverlay').classList.add('show');
+  document.getElementById('modelDrillTitle').textContent = modelName;
+  document.getElementById('modelDrillSub').textContent = 'Loading breakdown...';
+  document.getElementById('modelDrillBody').innerHTML =
+    '<div class="empty-state"><div class="e-icon">🔄</div><div class="e-text">Loading...</div></div>';
+
+  // Filter allStock for this model
+  const modelStock = allStock.filter(v =>
+    (v.model || '').trim().toLowerCase() === modelName.trim().toLowerCase() &&
+    v.status !== 'Delivered'
+  );
+
+  if (!modelStock.length) {
+    document.getElementById('modelDrillSub').textContent = 'No stock found';
+    document.getElementById('modelDrillBody').innerHTML =
+      '<div class="empty-state"><div class="e-icon">🚗</div><div class="e-text">No vehicles in stock</div></div>';
+    return;
+  }
+
+  const total = modelStock.length;
+  document.getElementById('modelDrillSub').textContent =
+    total + ' unit' + (total !== 1 ? 's' : '') + ' in stock across all locations';
+
+  // Group by variant
+  const variantMap = {};
+  modelStock.forEach(v => {
+    const variant = v.variant || 'Unknown Variant';
+    const fuel    = v.fuel    || '';
+    const colour  = v.colour  || 'Unknown';
+    const loc     = v.status === 'In Transit' ? 'In Transit' : (v.location || 'Unknown');
+    const key     = variant + '||' + fuel;
+
+    if (!variantMap[key]) variantMap[key] = { variant, fuel, colours: {}, total: 0 };
+    variantMap[key].total++;
+
+    if (!variantMap[key].colours[colour]) variantMap[key].colours[colour] = { count: 0, locs: {} };
+    variantMap[key].colours[colour].count++;
+    variantMap[key].colours[colour].locs[loc] = (variantMap[key].colours[colour].locs[loc] || 0) + 1;
+  });
+
+  // Sort variants by count desc
+  const variants = Object.values(variantMap).sort((a, b) => b.total - a.total);
+  const maxColourCount = Math.max(...variants.flatMap(v =>
+    Object.values(v.colours).map(c => c.count)
+  ));
+
+  // Total strip
+  let bodyHtml = `
+    <div class="model-total-strip">
+      <div class="mts-label">Total ${modelName} in Stock</div>
+      <div class="mts-num">${total}</div>
+    </div>`;
+
+  // Variant cards
+  variants.forEach(vt => {
+    const colours = Object.entries(vt.colours).sort((a, b) => b[1].count - a[1].count);
+    const colourRows = colours.map(([colour, data]) => {
+      const pct    = maxColourCount > 0 ? Math.round(data.count / maxColourCount * 100) : 0;
+      const swatch = getColourSwatch(colour);
+      const locPills = Object.entries(data.locs).map(([loc, cnt]) =>
+        `<span class="colour-loc-pill" style="${getLocPillStyle(loc)}">${loc} ${cnt > 1 ? '×'+cnt : ''}</span>`
+      ).join('');
+
+      return `<div class="colour-row">
+        <div class="colour-left">
+          <div class="colour-swatch" style="background:${swatch}"></div>
+          <div>
+            <div class="colour-name">${colour}</div>
+            <div class="colour-locs">${locPills}</div>
+          </div>
+        </div>
+        <div class="colour-count-wrap">
+          <div class="colour-bar"><div class="colour-bar-fill" style="width:${pct}%"></div></div>
+          <div class="colour-count">${data.count}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    bodyHtml += `
+      <div class="variant-card">
+        <div class="vc-header">
+          <div>
+            <span class="vc-name">${vt.variant}</span>
+            ${vt.fuel ? `<span class="fuel-badge">${vt.fuel}</span>` : ''}
+          </div>
+          <div class="vc-total">${vt.total}</div>
+        </div>
+        ${colourRows}
+      </div>`;
+  });
+
+  document.getElementById('modelDrillBody').innerHTML = bodyHtml;
+}
+
+function closeModelDrill() {
+  document.getElementById('modelDrillOverlay').classList.remove('show');
+}
+
+
+// ════════════════════════════════════════════════════════════════
+// GATE ENTRY HELPERS — Source + Mode
+// ════════════════════════════════════════════════════════════════
+let geSelectedSource = 'TKM';
+let geSelectedMode   = 'drivedown';
+
+function selectGeSource(src) {
+  geSelectedSource = src;
+  document.getElementById('geSource_tkm').classList.toggle('selected', src === 'TKM');
+  document.getElementById('geSource_codealer').classList.toggle('selected', src === 'Co-Dealer');
+  document.getElementById('geCoDealerName').style.display = src === 'Co-Dealer' ? 'block' : 'none';
+}
+
+function selectGeMode(mode) {
+  geSelectedMode = mode;
+  document.getElementById('geMode_drivedown').classList.toggle('selected', mode === 'drivedown');
+}
+
+// ════════════════════════════════════════════════════════════════
+// BULK TRAILER ENTRY
+// ════════════════════════════════════════════════════════════════
+let trailerStep       = 1;
+let trailerDetails    = {};
+let trailerVehicles   = [];
+let tSelectedLoc      = 'Stockyard';
+let tSelectedSource   = 'TKM';
+
+function openTrailerEntry() {
+  // Reset
+  trailerStep     = 1;
+  trailerDetails  = {};
+  trailerVehicles = [];
+  tSelectedLoc    = 'Stockyard';
+  tSelectedSource = 'TKM';
+
+  // Close gate entry modal if open
+  document.getElementById('gateEntryOverlay').classList.remove('show');
+
+  // Reset form fields
+  ['tTrailerNo','tTransporter','tDriverName','tDriverMobile','tRemarks','tCoDealerName'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('tCoDealerName').style.display = 'none';
+  document.getElementById('tReportingDateTime').value = new Date().toISOString().slice(0,16);
+
+  // Reset location
+  selectTLoc('Stockyard');
+  selectTSource('TKM');
+
+  // Populate model dropdown
+  const tvModel = document.getElementById('tvModel');
+  const models  = [...new Set(suffixes.map(r => r.model))].sort();
+  tvModel.innerHTML = '<option value="">— Select Model —</option>' + models.map(m => '<option>' + m + '</option>').join('');
+  document.getElementById('tvDispatch').value = new Date().toISOString().split('T')[0];
+
+  // Show step 1
+  setTrailerStep(1);
+  document.getElementById('trailerScreen').classList.add('show');
+}
+
+function closeTrailerEntry() {
+  document.getElementById('trailerScreen').classList.remove('show');
+}
+
+function selectTSource(src) {
+  tSelectedSource = src;
+  document.getElementById('tSource_tkm').classList.toggle('selected', src === 'TKM');
+  document.getElementById('tSource_codealer').classList.toggle('selected', src === 'Co-Dealer');
+  document.getElementById('tCoDealerName').style.display = src === 'Co-Dealer' ? 'block' : 'none';
+}
+
+function selectTLoc(loc) {
+  tSelectedLoc = loc;
+  ['Stockyard','Workshop','Showroom'].forEach(l => {
+    const btn = document.getElementById('tLoc_' + l);
+    if (btn) btn.classList.toggle('selected', l === loc);
+  });
+}
+
+function setTrailerStep(step) {
+  trailerStep = step;
+  // Show/hide steps
+  document.getElementById('trailerStep1').style.display = step === 1 ? 'block' : 'none';
+  document.getElementById('trailerStep2').style.display = step === 2 ? 'block' : 'none';
+  document.getElementById('trailerStep3').style.display = step === 3 ? 'block' : 'none';
+
+  // Update step indicators
+  [1,2,3].forEach(s => {
+    const numEl = document.getElementById('tStep' + s + 'Num');
+    const lblEl = document.getElementById('tStep' + s + 'Label');
+    if (s < step)  { numEl.className = 'step-num done';   lblEl.className = 'step-label'; numEl.textContent = '✓'; }
+    if (s === step){ numEl.className = 'step-num active';  lblEl.className = 'step-label active'; }
+    if (s > step)  { numEl.className = 'step-num';         lblEl.className = 'step-label'; numEl.textContent = s; }
+  });
+  [1,2].forEach(s => {
+    const line = document.getElementById('tLine' + s);
+    if (line) line.className = 'step-line' + (s < step ? ' done' : '');
+  });
+
+  // Bottom bar
+  const backBtn = document.getElementById('tBtnBack');
+  const nextBtn = document.getElementById('tBtnNext');
+  if (step === 1) { backBtn.textContent = 'Cancel'; nextBtn.textContent = 'Next →'; }
+  if (step === 2) {
+    backBtn.textContent = '← Back';
+    nextBtn.textContent = trailerVehicles.length > 0 ? 'Review (' + trailerVehicles.length + ' vehicles)' : 'Review →';
+  }
+  if (step === 3) { backBtn.textContent = '← Edit'; nextBtn.textContent = '✅ Register All Vehicles'; nextBtn.style.background = 'var(--green)'; }
+
+  if (step === 2) renderTrailerStep2();
+  if (step === 3) renderTrailerStep3();
+}
+
+function trailerNext() {
+  if (trailerStep === 1) validateAndGoStep2();
+  else if (trailerStep === 2) {
+    if (trailerVehicles.length === 0) {
+      showErr('tStep2Error','⚠️ Please add at least one vehicle before proceeding.');
+      return;
+    }
+    setTrailerStep(3);
+  }
+  else if (trailerStep === 3) submitTrailer();
+}
+
+function trailerBack() {
+  if (trailerStep === 1) closeTrailerEntry();
+  else setTrailerStep(trailerStep - 1);
+}
+
+function validateAndGoStep2() {
+  const trailerNo   = document.getElementById('tTrailerNo').value.trim();
+  const transporter = document.getElementById('tTransporter').value.trim();
+  const driverName  = document.getElementById('tDriverName').value.trim();
+  const driverMob   = document.getElementById('tDriverMobile').value.trim();
+  const dateTime    = document.getElementById('tReportingDateTime').value;
+  const coDealerName= document.getElementById('tCoDealerName').value.trim();
+  const errEl       = document.getElementById('tStep1Error');
+
+  errEl.innerHTML = '';
+  if (!trailerNo)   { showErr('tStep1Error','⚠️ Trailer number is required.'); return; }
+  if (!transporter) { showErr('tStep1Error','⚠️ Transporter name is required.'); return; }
+  if (!driverName)  { showErr('tStep1Error','⚠️ Driver name is required.'); return; }
+  if (!driverMob || driverMob.length !== 10) { showErr('tStep1Error','⚠️ Valid 10-digit driver mobile required.'); return; }
+  if (!dateTime)    { showErr('tStep1Error','⚠️ Reporting date and time is required.'); return; }
+  if (!tSelectedLoc){ showErr('tStep1Error','⚠️ Please select received location.'); return; }
+  if (tSelectedSource === 'Co-Dealer' && !coDealerName) { showErr('tStep1Error','⚠️ Please enter co-dealer name.'); return; }
+
+  trailerDetails = {
+    trailerNo, transporter, driverName, driverMobile: driverMob,
+    reportingDateTime: dateTime, location: tSelectedLoc,
+    source: tSelectedSource,
+    coDealerName: tSelectedSource === 'Co-Dealer' ? coDealerName : '',
+    remarks: document.getElementById('tRemarks').value.trim(),
+    receivedBy: currentUser ? currentUser.name : ''
+  };
+
+  setTrailerStep(2);
+}
+
+function renderTrailerStep2() {
+  // Summary card
+  const td = trailerDetails;
+  document.getElementById('tSummaryCard').innerHTML = `
+    <div class="ts-label">Trailer in Progress</div>
+    <div class="ts-value" style="font-size:20px;font-weight:900;margin-bottom:4px">${td.trailerNo}</div>
+    <div class="ts-grid">
+      <div class="ts-item"><div class="ts-label">Transporter</div><div class="ts-value">${td.transporter}</div></div>
+      <div class="ts-item"><div class="ts-label">Driver</div><div class="ts-value">${td.driverName} | ${td.driverMobile}</div></div>
+      <div class="ts-item"><div class="ts-label">Source</div><div class="ts-value">${td.source}${td.coDealerName ? ' — ' + td.coDealerName : ''}</div></div>
+      <div class="ts-item"><div class="ts-label">Location</div><div class="ts-value">${td.location}</div></div>
+    </div>`;
+
+  // Vehicle list
+  renderTrailerVehicleList();
+
+  // Update vehicle number
+  document.getElementById('tVehNum').textContent = '#' + (trailerVehicles.length + 1);
+  document.getElementById('tBtnNext').textContent = trailerVehicles.length > 0
+    ? 'Review (' + trailerVehicles.length + ' vehicle' + (trailerVehicles.length>1?'s':'') + ')'
+    : 'Review →';
+}
+
+function renderTrailerVehicleList() {
+  const listEl = document.getElementById('tVehicleList');
+  if (!trailerVehicles.length) { listEl.innerHTML = ''; return; }
+  listEl.innerHTML = trailerVehicles.map((v, i) => `
+    <div class="trailer-veh-item">
+      <div class="tvi-num">${i+1}</div>
+      <div class="tvi-model">${v.model} ${v.variant} <span style="color:var(--red);font-size:11px">${v.suffix||''}</span></div>
+      <div class="tvi-detail">${v.colour} | ${v.fuel}</div>
+      <div class="tvi-chassis">${v.chassis}</div>
+      <button class="tvi-remove" onclick="removeTrailerVehicle(${i})">✕ Remove</button>
+    </div>`).join('');
+  document.getElementById('tVehNum').textContent = '#' + (trailerVehicles.length + 1);
+  document.getElementById('tBtnNext').textContent = 'Review (' + trailerVehicles.length + ' vehicle' + (trailerVehicles.length>1?'s':'') + ')';
+}
+
+function removeTrailerVehicle(idx) {
+  trailerVehicles.splice(idx, 1);
+  renderTrailerVehicleList();
+}
+
+function renderTrailerStep3() {
+  const td = trailerDetails;
+  document.getElementById('tFinalSummary').innerHTML = `
+    <div class="ts-label">Ready to Register — ${trailerVehicles.length} Vehicle${trailerVehicles.length>1?'s':''}</div>
+    <div class="ts-value" style="font-size:20px;font-weight:900;margin-bottom:4px">${td.trailerNo}</div>
+    <div class="ts-grid">
+      <div class="ts-item"><div class="ts-label">Transporter</div><div class="ts-value">${td.transporter}</div></div>
+      <div class="ts-item"><div class="ts-label">Driver</div><div class="ts-value">${td.driverName}</div></div>
+      <div class="ts-item"><div class="ts-label">Source</div><div class="ts-value">${td.source}${td.coDealerName?' — '+td.coDealerName:''}</div></div>
+      <div class="ts-item"><div class="ts-label">Reporting</div><div class="ts-value">${new Date(td.reportingDateTime).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>
+    </div>`;
+
+  document.getElementById('tFinalVehicleList').innerHTML = trailerVehicles.map((v,i) => `
+    <div class="trailer-veh-item">
+      <div class="tvi-num">${i+1}</div>
+      <div class="tvi-model">${v.model} ${v.variant} <span style="color:var(--red);font-size:11px">${v.suffix||''}</span></div>
+      <div class="tvi-detail">${v.colour} | ${v.fuel}</div>
+      <div class="tvi-chassis">${v.chassis}</div>
+    </div>`).join('');
+}
+
+// Cascading dropdowns for trailer vehicle form
+function tvDDVariant() {
+  const m = document.getElementById('tvModel').value;
+  const opts = [...new Set(suffixes.filter(r=>r.model===m).map(r=>r.variant))].sort();
+  setOpts('tvVariant',opts,'— Select Variant —'); setOpts('tvFuel',[],'— Select Fuel —');
+  setOpts('tvColour',[],'— Select Colour —'); setOpts('tvInterior',[],'— Select Interior —');
+  document.getElementById('tvSuffix').value='';
+}
+function tvDDFuel() {
+  const m=document.getElementById('tvModel').value, v=document.getElementById('tvVariant').value;
+  const opts=[...new Set(suffixes.filter(r=>r.model===m&&r.variant===v).map(r=>r.fuel))].sort();
+  setOpts('tvFuel',opts,'— Select Fuel —'); setOpts('tvColour',[],'— Select Colour —');
+  setOpts('tvInterior',[],'— Select Interior —'); document.getElementById('tvSuffix').value='';
+}
+function tvDDColour() {
+  const m=document.getElementById('tvModel').value, v=document.getElementById('tvVariant').value, f=document.getElementById('tvFuel').value;
+  const opts=[...new Set(suffixes.filter(r=>r.model===m&&r.variant===v&&r.fuel===f).map(r=>r.colour))].sort();
+  setOpts('tvColour',opts,'— Select Colour —'); setOpts('tvInterior',[],'— Select Interior —');
+  document.getElementById('tvSuffix').value='';
+}
+function tvDDInterior() {
+  const m=document.getElementById('tvModel').value, v=document.getElementById('tvVariant').value;
+  const f=document.getElementById('tvFuel').value, c=document.getElementById('tvColour').value;
+  const matches=suffixes.filter(r=>r.model===m&&r.variant===v&&r.fuel===f&&r.colour===c);
+  const opts=[...new Set(matches.map(r=>r.interior||'(None)'))].sort();
+  setOpts('tvInterior',opts,'— Select Interior —'); document.getElementById('tvSuffix').value='';
+}
+function tvDDSuffix() {
+  const m=document.getElementById('tvModel').value, v=document.getElementById('tvVariant').value;
+  const f=document.getElementById('tvFuel').value, c=document.getElementById('tvColour').value;
+  const i=document.getElementById('tvInterior').value;
+  const match=suffixes.find(r=>r.model===m&&r.variant===v&&r.fuel===f&&r.colour===c&&(r.interior===i||(!r.interior&&i==='(None)')));
+  const inp=document.getElementById('tvSuffix');
+  inp.value=match?match.suffix:'— Not found —';
+  inp.style.borderColor=match?'var(--green)':'var(--red)';
+}
+
+function startScanForTrailer() { scanMode='trailer'; initScanner(); }
+
+function addVehicleToTrailer() {
+  const chassis  = document.getElementById('tvChassis').value.trim().toUpperCase();
+  const model    = document.getElementById('tvModel').value;
+  const variant  = document.getElementById('tvVariant').value;
+  const fuel     = document.getElementById('tvFuel').value;
+  const colour   = document.getElementById('tvColour').value;
+  const interior = document.getElementById('tvInterior').value;
+  const suffix   = document.getElementById('tvSuffix').value;
+  const dispatch = document.getElementById('tvDispatch').value;
+  const remarks  = document.getElementById('tvVehRemarks').value.trim();
+  const errEl    = document.getElementById('tAddVehError');
+
+  errEl.innerHTML = '';
+  if (!chassis) { showErr('tAddVehError','⚠️ Chassis number required.'); return; }
+  if (!validateChassisFormat('tvChassis','tvChassisErr')) { showErr('tAddVehError','⚠️ Invalid chassis format.'); return; }
+  if (!model||!variant||!fuel||!colour||!interior) { showErr('tAddVehError','⚠️ Fill all vehicle specification fields.'); return; }
+
+  // Check duplicate in this trailer
+  if (trailerVehicles.find(v=>v.chassis===chassis)) { showErr('tAddVehError','⚠️ This chassis is already added to this trailer.'); return; }
+
+  trailerVehicles.push({ chassis, model, variant, fuel, colour, interior, suffix, dispatch, remarks });
+
+  // Reset form for next vehicle
+  ['tvChassis','tvSuffix','tvVehRemarks'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  ['tvModel','tvVariant','tvFuel','tvColour','tvInterior'].forEach(id=>{ const el=document.getElementById(id); if(el) el.selectedIndex=0; });
+  document.getElementById('tvChassisErr').textContent='';
+  document.getElementById('tvSuffix').style.borderColor='';
+
+  renderTrailerVehicleList();
+}
+
+async function submitTrailer() {
+  if (!trailerVehicles.length) { showErr('tStep3Error','⚠️ No vehicles to register.'); return; }
+  document.getElementById('tBtnNext').disabled = true;
+  document.getElementById('tBtnNext').textContent = 'Registering...';
+  showLoader('Registering ' + trailerVehicles.length + ' vehicles...');
+
+  const td       = trailerDetails;
+  const today    = new Date().toISOString().split('T')[0];
+  const ts       = new Date().toISOString();
+  const trailerRef = td.trailerNo;
+  let   success  = 0, failed = 0;
+
+  for (const v of trailerVehicles) {
+    try {
+      await postAPIWithQueue({
+        action:      'addNewVehicle',
+        chassis:     v.chassis,
+        model:       v.model,
+        variant:     v.variant,
+        fuel:        v.fuel,
+        colour:      v.colour,
+        interior:    v.interior,
+        suffix:      v.suffix,
+        dispatch:    v.dispatch || today,
+        receivedBy:  td.receivedBy,
+        driverName:  td.driverName,
+        driverMobile:td.driverMobile,
+        transporter: td.transporter,
+        trailerNo:   trailerRef,
+        source:      td.source,
+        coDealerName:td.coDealerName || '',
+        reportingDateTime: td.reportingDateTime,
+        location:    td.location,
+        status:      'In Stock',
+        arrival:     today,
+        timestamp:   ts,
+        gateEntry:   true,
+        remarks:     v.remarks || td.remarks || ''
+      });
+      // Log movement
+      await postAPIWithQueue({
+        action:    'logMovement',
+        chassis:   v.chassis,
+        model:     v.model,
+        variant:   v.variant,
+        fuel:      v.fuel,
+        suffix:    v.suffix,
+        from:      td.source + (td.coDealerName ? ' (' + td.coDealerName + ')' : ''),
+        to:        td.location,
+        staff:     td.receivedBy,
+        role:      currentUser ? currentUser.role : '',
+        driverName:td.driverName,
+        remarks:   'Bulk Trailer Entry | Trailer: ' + trailerRef + ' | Transporter: ' + td.transporter,
+        via:       'PWA — Bulk Trailer Entry',
+        timestamp: ts
+      });
+      success++;
+    } catch(e) { failed++; }
+  }
+
+  hideLoader();
+  closeTrailerEntry();
+
+  shiftStats.arrivals += success;
+  showSuccess('🚛', success + ' Vehicle' + (success>1?'s':'') + ' Registered!',
+    'Trailer ' + trailerRef + ' — all vehicles added to stock at ' + td.location + (failed>0?' | ' + failed + ' failed':''),
+    [
+      { k:'Trailer No.',  v: trailerRef },
+      { k:'Transporter',  v: td.transporter },
+      { k:'Driver',       v: td.driverName + ' | ' + td.driverMobile },
+      { k:'Source',       v: td.source + (td.coDealerName?' — '+td.coDealerName:'') },
+      { k:'Location',     v: td.location },
+      { k:'Registered',   v: success + ' vehicles' },
+      { k:'Received By',  v: td.receivedBy },
+    ]
+  );
+}
+
 // ── LOCATION DRILL-DOWN ──────────────────────────────────────────
 function openLocDrill(loc) {
   const canMove = currentUser && ['owner','manager'].includes(currentUser.role.toLowerCase());
@@ -2671,6 +3419,7 @@ async function moveFromStock(chassis, event) {
 document.getElementById('modalDelivery').addEventListener('click', function(e) { if(e.target===this) closeDelivery(); });
 document.getElementById('chassisDetailOverlay').addEventListener('click', function(e) { if(e.target===this) closeChassisDetail(); });
 document.getElementById('locDrillOverlay').addEventListener('click', function(e) { if(e.target===this) closeLocDrill(); });
+document.getElementById('modelDrillOverlay').addEventListener('click', function(e) { if(e.target===this) closeModelDrill(); });
 document.getElementById('profileMenuOverlay').addEventListener('click', function(e) { if(e.target===this) closeProfileMenu(); });
 document.getElementById('staffPanelOverlay').addEventListener('click', function(e) { if(e.target===this) closeStaffPanel(); });
 document.getElementById('soldOverlay').addEventListener('click', function(e) { if(e.target===this) closeSoldModal(); });
@@ -2825,6 +3574,193 @@ document.getElementById('shiftOverlay').addEventListener('click', function(e) { 
     </div>
 
     <button class="cp-cancel-btn" onclick="closeChangePIN()">Cancel</button>
+  </div>
+</div>
+
+
+
+<!-- ══ BULK TRAILER ENTRY SCREEN ══ -->
+<div class="trailer-screen" id="trailerScreen">
+
+  <div class="trailer-header">
+    <button class="trailer-back" onclick="closeTrailerEntry()">←</button>
+    <h2>🚛 Bulk Trailer Entry</h2>
+  </div>
+
+  <div class="trailer-body">
+
+    <!-- Step bar -->
+    <div class="step-bar">
+      <div class="step-item">
+        <div class="step-num active" id="tStep1Num">1</div>
+        <div class="step-label active" id="tStep1Label">Trailer Details</div>
+      </div>
+      <div class="step-line" id="tLine1"></div>
+      <div class="step-item">
+        <div class="step-num" id="tStep2Num">2</div>
+        <div class="step-label" id="tStep2Label">Add Vehicles</div>
+      </div>
+      <div class="step-line" id="tLine2"></div>
+      <div class="step-item">
+        <div class="step-num" id="tStep3Num">3</div>
+        <div class="step-label" id="tStep3Label">Confirm</div>
+      </div>
+    </div>
+
+    <!-- STEP 1: Trailer Details -->
+    <div id="trailerStep1">
+      <div class="card">
+        <div class="card-title">Trailer Information</div>
+
+        <div class="input-group">
+          <label class="input-label">Source *</label>
+          <div class="source-toggle">
+            <div class="source-btn selected" id="tSource_tkm" onclick="selectTSource('TKM')">TKM</div>
+            <div class="source-btn" id="tSource_codealer" onclick="selectTSource('Co-Dealer')">Co-Dealer</div>
+          </div>
+          <input class="input-field" id="tCoDealerName" type="text" placeholder="Co-dealer name and city" style="display:none;margin-top:8px">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Trailer Number *</label>
+          <input class="input-field" id="tTrailerNo" type="text" placeholder="e.g. HR 55 AA 1234" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Transporter Name *</label>
+          <input class="input-field" id="tTransporter" type="text" placeholder="e.g. TCI, VRL Logistics...">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Driver Name *</label>
+          <input class="input-field" id="tDriverName" type="text" placeholder="Driver full name">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Driver Mobile *</label>
+          <input class="input-field" id="tDriverMobile" type="tel" placeholder="10-digit mobile number" maxlength="10">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Reporting Date & Time *</label>
+          <input class="input-field" id="tReportingDateTime" type="datetime-local">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Received At Location *</label>
+          <div class="loc-grid" style="margin-bottom:0">
+            <div class="loc-btn selected" id="tLoc_Stockyard" onclick="selectTLoc('Stockyard')">
+              <div class="loc-icon">🅿️</div><div class="loc-name">Stockyard</div><div class="loc-sub">Main yard</div>
+            </div>
+            <div class="loc-btn" id="tLoc_Workshop" onclick="selectTLoc('Workshop')">
+              <div class="loc-icon">🔧</div><div class="loc-name">Workshop</div><div class="loc-sub">PDI / service</div>
+            </div>
+            <div class="loc-btn loc-full" id="tLoc_Showroom" onclick="selectTLoc('Showroom')">
+              <div class="loc-icon">🏢</div><div class="loc-name">Showroom</div><div class="loc-sub">Display</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Remarks</label>
+          <input class="input-field" id="tRemarks" type="text" placeholder="Optional notes">
+        </div>
+
+        <div id="tStep1Error" style="margin-bottom:8px"></div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Add Vehicles -->
+    <div id="trailerStep2" style="display:none">
+
+      <!-- Trailer summary -->
+      <div class="trailer-summary" id="tSummaryCard"></div>
+
+      <!-- Vehicles added so far -->
+      <div id="tVehicleList"></div>
+
+      <!-- Add vehicle form -->
+      <div class="add-veh-form" id="tAddVehForm">
+        <div class="avf-title">➕ Add Vehicle <span id="tVehNum" style="color:var(--green)"></span></div>
+
+        <div class="input-group">
+          <label class="input-label">Chassis No. *</label>
+          <div class="input-with-btn">
+            <input class="input-field" id="tvChassis" type="text" placeholder="Scan or enter chassis"
+              style="text-transform:uppercase;letter-spacing:1px"
+              oninput="this.value=this.value.toUpperCase();validateChassisFormat('tvChassis','tvChassisErr')">
+            <button class="btn btn-green btn-sm" onclick="startScanForTrailer()">📷</button>
+          </div>
+          <div id="tvChassisErr" style="font-size:11px;color:var(--red);margin-top:4px"></div>
+        </div>
+
+        <div class="input-group"><label class="input-label">Model *</label>
+          <select class="input-field" id="tvModel" onchange="tvDDVariant()"><option value="">— Select Model —</option></select>
+        </div>
+        <div class="input-group"><label class="input-label">Variant *</label>
+          <select class="input-field" id="tvVariant" onchange="tvDDFuel()"><option value="">— Select Variant —</option></select>
+        </div>
+        <div class="input-group"><label class="input-label">Fuel Type *</label>
+          <select class="input-field" id="tvFuel" onchange="tvDDColour()"><option value="">— Select Fuel Type —</option></select>
+        </div>
+        <div class="input-group"><label class="input-label">Colour *</label>
+          <select class="input-field" id="tvColour" onchange="tvDDInterior()"><option value="">— Select Colour —</option></select>
+        </div>
+        <div class="input-group"><label class="input-label">Interior *</label>
+          <select class="input-field" id="tvInterior" onchange="tvDDSuffix()"><option value="">— Select Interior —</option></select>
+        </div>
+        <div class="input-group"><label class="input-label">Suffix Code (auto)</label>
+          <input class="input-field ok" id="tvSuffix" readonly>
+        </div>
+        <div class="input-group"><label class="input-label">TKM Dispatch Date</label>
+          <input class="input-field" id="tvDispatch" type="date">
+        </div>
+        <div class="input-group"><label class="input-label">Remarks</label>
+          <input class="input-field" id="tvVehRemarks" type="text" placeholder="Condition, damage if any...">
+        </div>
+
+        <div id="tAddVehError" style="margin-bottom:8px"></div>
+        <button class="btn btn-green" onclick="addVehicleToTrailer()">✅ Add This Vehicle</button>
+      </div>
+
+      <div id="tStep2Error" style="margin-bottom:8px"></div>
+    </div>
+
+    <!-- STEP 3: Confirm & Submit -->
+    <div id="trailerStep3" style="display:none">
+      <div class="trailer-summary" id="tFinalSummary"></div>
+      <div class="card">
+        <div class="card-title">✅ Ready to Register</div>
+        <div id="tFinalVehicleList"></div>
+        <div id="tStep3Error" style="margin-bottom:8px"></div>
+      </div>
+    </div>
+
+  </div><!-- end trailer-body -->
+
+  <!-- Fixed bottom bar -->
+  <div class="trailer-bottom" id="trailerBottomBar">
+    <button class="btn btn-gray" style="flex:1" onclick="trailerBack()" id="tBtnBack">Cancel</button>
+    <button class="btn btn-green" style="flex:2" onclick="trailerNext()" id="tBtnNext">Next →</button>
+  </div>
+</div>
+
+<!-- ══ MODEL DRILL-DOWN MODAL ══ -->
+<div class="model-drill-overlay" id="modelDrillOverlay">
+  <div class="model-drill-sheet">
+    <div class="model-drill-header">
+      <div class="model-drill-handle"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div class="model-drill-title" id="modelDrillTitle">—</div>
+          <div class="model-drill-sub"   id="modelDrillSub">—</div>
+        </div>
+        <button onclick="closeModelDrill()" style="background:var(--gray-100);border:none;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;color:var(--gray-600);display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+    </div>
+    <div class="model-drill-body" id="modelDrillBody">
+      <div class="empty-state"><div class="e-icon">🔄</div><div class="e-text">Loading...</div></div>
+    </div>
   </div>
 </div>
 
