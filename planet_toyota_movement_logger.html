@@ -362,26 +362,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .sold-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: flex-end; justify-content: center; z-index: 200; }
 .sold-overlay.show { display: flex; }
 
-
-.role-edp              { background: #EDE9FE; color: #5B21B6; }
-.role-sales-manager    { background: #DBEAFE; color: #1E40AF; }
-.role-service-manager  { background: #D1FAE5; color: #065F46; }
-.role-sales-team-leader{ background: #FEF3C7; color: #92400E; }
-.role-sales-tl         { background: #FEF3C7; color: #92400E; }
-.pill-allocated  { background: #FEF3C7; color: #92400E; font-weight:800; }
-.pill-available  { background: #ECFDF5; color: #065F46; font-weight:800; }
-.pill-tkmbilled  { background: #EDE9FE; color: #5B21B6; }
-.stat-card.purple .stat-num { color: #7C3AED; }
-.alloc-badge { background: #FEF3C7; color: #92400E; border-radius: var(--radius-xs); padding: 6px 12px; font-size: 12px; font-weight: 700; margin-top: 8px; display: flex; align-items: center; justify-content: space-between; }
-.alloc-badge-label { font-size: 10px; color: #92400E; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.5px; }
-.dealloc-btn { background: #FDE68A; color: #92400E; border: none; border-radius: var(--radius-xs); padding: 4px 10px; font-size: 11px; font-weight: 700; cursor: pointer; }
-.tkm-billed-card { background: linear-gradient(135deg, #4C1D95 0%, #5B21B6 100%); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; color: white; }
-.tkm-item { background: white; border-radius: var(--radius-sm); padding: 14px; margin-bottom: 10px; border-left: 4px solid #7C3AED; border: 1px solid #DDD6FE; }
-.tkm-item-model   { font-size: 14px; font-weight: 800; color: var(--dark); }
-.tkm-item-detail  { font-size: 12px; color: var(--gray-400); margin-top: 3px; }
-.tkm-item-chassis { font-size: 11px; font-family: monospace; color: var(--gray-600); margin-top: 4px; letter-spacing: 1px; }
-.tkm-item-days    { font-size: 11px; font-weight: 700; color: #7C3AED; margin-top: 4px; }
-
 </style>
 </head>
 <body>
@@ -538,7 +518,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="card-title">🚛 New TKM Arrival — Gate Entry</div>
     <p style="font-size:12px;color:#666;margin-bottom:12px">Use this when a new vehicle arrives from TKM. Records gate entry timestamp automatically.</p>
     <button class="gate-btn" onclick="openGateEntry()" style="margin-bottom:10px">+ Register New Arrival</button>
-    <button class="gate-btn" id="tkmBilledEntryBtn" onclick="openTKMBilledEntry()" style="background:var(--navy);display:none;box-shadow:0 4px 14px rgba(26,31,46,0.3)">📋 Register TKM Billed Vehicle</button>
+    <button class="gate-btn" id="tkmBilledEntryBtn" onclick="openTKMBilledEntry()" style="background:var(--dark);display:none">📋 Register TKM Billed Vehicle</button>
   </div>
 
   <!-- GATE ENTRY MODAL -->
@@ -667,7 +647,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <div class="stat-card blue clickable" onclick="openLocDrill('Workshop')"><div class="stat-num" id="dWorkshop">—</div><div class="stat-label">Workshop</div></div>
     <div class="stat-card red full clickable" onclick="openLocDrill('Showroom')"><div class="stat-num" id="dShowroom">—</div><div class="stat-label">Showroom</div></div>
     <div class="stat-card orange full clickable" onclick="openLocDrill('In Transit')"><div class="stat-num" id="dTransit">—</div><div class="stat-label">In Transit</div></div>
-    <div class="stat-card purple full clickable" onclick="openTKMBilledSheet()"><div class="stat-card-accent" style="background:#7C3AED"></div><div class="stat-num" id="dTKMBilled" style="color:#7C3AED">—</div><div class="stat-label">TKM Billed — Not Arrived</div></div>
+    <div class="stat-card purple full clickable" onclick="openTKMBilledSheet()" style="cursor:pointer;margin-top:10px"><div class="stat-card-accent" style="background:#7C3AED"></div><div class="stat-num" id="dTKMBilled" style="color:#7C3AED">—</div><div class="stat-label">TKM Billed — Not Arrived</div></div>
   </div>
   <div class="card">
     <div class="card-title">🚗 Model-wise Stock</div>
@@ -957,69 +937,67 @@ async function attemptLogin() {
 // clearLockData kept for compatibility (clears any old lock data on login)
 function clearLockData() { localStorage.removeItem('pt_lock'); }
 
-
-// ════════════════════════════════════════════════════════════════
-// ROLE PERMISSION MATRIX
-// ════════════════════════════════════════════════════════════════
-function userRole() {
-  return (currentUser ? currentUser.role : '').toLowerCase().trim();
-}
+// ════════════════════════════════════════════════════════════
+// ROLE PERMISSION HELPERS
+// ════════════════════════════════════════════════════════════
+function userRole() { return (currentUser ? currentUser.role : '').toLowerCase().trim(); }
+// Owner, Sales Mgr, Service Mgr, Yard Staff can log movement & receive
 function canLogMovement()   { return ['owner','sales manager','service manager','yard staff'].includes(userRole()); }
+// Everyone except Yard Staff sees dashboard & stock
 function canSeeDashboard()  { return userRole() !== 'yard staff'; }
+// Owner, Sales Mgr, Sales TL can allocate
 function canAllocate()      { return ['owner','sales manager','sales team leader','sales tl'].includes(userRole()); }
-function canSeeAllocation() { return ['owner','sales manager','sales team leader','sales tl','edp'].includes(userRole()); }
+// Owner, Sales Mgr, EDP, Sales TL see allocation status badges
+function canSeeAllocation() { return ['owner','sales manager','edp','sales team leader','sales tl'].includes(userRole()); }
+// Owner, Sales Mgr, EDP can enter TKM Billed
 function canEnterTKMBilled(){ return ['owner','sales manager','edp'].includes(userRole()); }
+// Owner only for staff management
 function canManageStaff()   { return userRole() === 'owner'; }
-function isFullAccess()     { return ['owner','sales manager','service manager'].includes(userRole()); }
-function isEDP()            { return userRole() === 'edp'; }
-function isSalesTL()        { return ['sales team leader','sales tl'].includes(userRole()); }
+// Move buttons in stock/drill
+function canMoveVehicle()   { return ['owner','sales manager','service manager'].includes(userRole()); }
 
 function bootApp() {
   document.getElementById('loginScreen').classList.add('hidden');
   document.getElementById('mainHeader').style.display = 'block';
   document.getElementById('bottomNav').style.display  = 'flex';
 
-  // Set session info in header
+  // Session info
   document.getElementById('sessionName').textContent = currentUser.name;
   const badge = document.getElementById('sessionRoleBadge');
-  badge.textContent = currentUser.role.toUpperCase();
-  badge.className = 'role-badge role-' + currentUser.role.toLowerCase().replace(' ','');
+  badge.textContent = currentUser.role;
+  badge.className = 'role-badge role-' + currentUser.role.toLowerCase().replace(/ /g,'-');
 
-  // Show/hide tabs based on role
-  const isOwnerOrManager = ['owner','manager'].includes(currentUser.role.toLowerCase());
-  document.getElementById('navDash').classList.toggle('hidden', !isOwnerOrManager);
-  document.getElementById('navStock').classList.toggle('hidden', !isOwnerOrManager);
+  // Nav tabs visibility
+  document.getElementById('navLog').classList.toggle('hidden',     !canLogMovement());
+  document.getElementById('navReceive').classList.toggle('hidden', !canLogMovement());
+  document.getElementById('navDash').classList.toggle('hidden',    !canSeeDashboard());
+  document.getElementById('navStock').classList.toggle('hidden',   !canSeeDashboard());
+
+  // Button visibility
+  const staffBtn = document.getElementById('staffMgmtBtn');
+  if (staffBtn) staffBtn.style.display = canManageStaff() ? 'flex' : 'none';
+  const tkmBtn = document.getElementById('tkmBilledEntryBtn');
+  if (tkmBtn) tkmBtn.style.display = canEnterTKMBilled() ? 'flex' : 'none';
 
   // Start session timer
   startSessionTimer();
 
-  // Boot app data
-  // Nav visibility based on role
-  document.getElementById('navLog').classList.toggle('hidden', !canLogMovement());
-  document.getElementById('navReceive').classList.toggle('hidden', !canLogMovement());
-  document.getElementById('navDash').classList.toggle('hidden', !canSeeDashboard());
-  document.getElementById('navStock').classList.toggle('hidden', !canSeeDashboard());
-  const _staffBtn = document.getElementById('staffMgmtBtn');
-  if (_staffBtn) _staffBtn.style.display = canManageStaff() ? 'flex' : 'none';
-  const _tkmBtn = document.getElementById('tkmBilledEntryBtn');
-  if (_tkmBtn) _tkmBtn.style.display = canEnterTKMBilled() ? 'flex' : 'none';
-  if (!canLogMovement()) { setTimeout(() => switchTab('dash'), 100); }
-
+  // Boot data
   document.getElementById('nfDispatch').value = new Date().toISOString().split('T')[0];
   showRecent();
   loadSuffixes();
   loadPendingTransits();
-  switchTab('log');
+
+  // Starting tab — movement roles go to log, others go to dashboard
+  if (canLogMovement()) { switchTab('log'); }
+  else                  { switchTab('dash'); }
+
   loadStaffNames();
 
-  // Reset activity on any touch/click
   document.addEventListener('touchstart', resetSessionTimer, { passive: true });
   document.addEventListener('click', resetSessionTimer);
-  // Request notification permission
   requestNotificationPermission();
-  // Start online status monitoring
   updateOnlineStatus();
-  // Reset shift stats for new session
   shiftStats = { movements: 0, dispatched: 0, received: 0, arrivals: 0, deliveries: 0 };
   shiftMovements = [];
 }
@@ -1059,9 +1037,9 @@ function logout(auto = false) {
 
 // ── TAB SWITCHING ─────────────────────────────────────────────────
 function switchTab(tab) {
-  // Guard: yard staff can only access log + receive
-  const isOwnerOrManager = currentUser && ['owner','manager'].includes(currentUser.role.toLowerCase());
-  if ((tab === 'dash' || tab === 'stock') && !isOwnerOrManager) return;
+  // Guard based on role
+  if ((tab === 'dash' || tab === 'stock') && !canSeeDashboard()) return;
+  if ((tab === 'log'  || tab === 'receive') && !canLogMovement()) return;
 
   activeTab = tab;
   document.querySelectorAll('.screen').forEach(s => { s.style.display = 'none'; s.classList.remove('active'); });
@@ -1075,9 +1053,9 @@ function switchTab(tab) {
   const subs = { log:'Log Movement', receive:'Receive Vehicle', dash:'Live Dashboard', stock:'Stock Search' };
   document.getElementById('headerSub').textContent = subs[tab] || 'Vehicle Tracker';
 
-  if (tab === 'dash')    loadDashboard();
-  if (tab === 'stock')   loadStock();
-  if (tab === 'receive') loadPendingTransits();
+  if (tab === 'dash')    { loadDashboard(); }
+  if (tab === 'stock')   { loadStock(); }
+  if (tab === 'receive') { loadPendingTransits(); }
 }
 
 // ── SUFFIX DATA ───────────────────────────────────────────────────
@@ -1299,11 +1277,8 @@ function showVehicle(v) {
   if (v.status === 'In Transit') al.innerHTML += `<div class="alert alert-transit">🚚 This vehicle is <b>In Transit</b> to <b>${v.transitTo||'?'}</b>. Use Receive tab to confirm.</div>`;
   if (v.status === 'Sold-Not Delivered') al.innerHTML += '<div class="alert alert-warn">⚑ This vehicle is <b>Sold — Not Delivered</b>.</div>';
   if (parseInt(v.days) >= 45) al.innerHTML += `<div class="alert alert-error">🔴 <b>${v.days} days</b> in system — urgent action needed.</div>`;
-  // Merge allocation data from allStock
-  const _s = allStock.find(x => x.chassis === v.chassis);
-  if (_s) { v.allocatedTo = _s.allocatedTo||''; v.allocBookingRef = _s.allocBookingRef||''; v.allocDeliveryDate = _s.allocDeliveryDate||''; }
   showScreen('screen-vehicle');
-  showVehicleAllocation(vehicle);
+  if (typeof showVehicleAllocation === 'function') showVehicleAllocation(vehicle);
 }
 
 function selectLoc(loc) {
@@ -1504,8 +1479,8 @@ async function loadDashboard() {
     document.getElementById('dStockyard').textContent= d.stockyard|| 0;
     document.getElementById('dWorkshop').textContent = d.workshop  || 0;
     document.getElementById('dShowroom').textContent = d.showroom  || 0;
-    document.getElementById('dTransit').textContent   = d.transit    || 0;
-    if(document.getElementById('dTKMBilled')) document.getElementById('dTKMBilled').textContent = d.tkmBilled || 0;
+    document.getElementById('dTransit').textContent  = d.transit || 0;
+    const _el=document.getElementById('dTKMBilled');if(_el)_el.textContent=d.tkmBilled||0;
     document.getElementById('dashLastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
     const mEl = document.getElementById('modelWiseList');
     if (d.models && d.models.length) {
@@ -1560,11 +1535,11 @@ function filterStock() { renderStock(); }
 function renderStock() {
   const q = (document.getElementById('stockSearch').value || '').toUpperCase().trim();
   let items = allStock;
-  if (stockFilter !== 'ALL') items = items.filter(v => v.location === stockFilter || (stockFilter === 'In Transit' && v.status === 'In Transit') || (stockFilter === 'TKM Billed' && v.status === 'TKM Billed'));
+  if (stockFilter !== 'ALL') items = items.filter(v => v.location === stockFilter || (stockFilter === 'In Transit' && v.status === 'In Transit'));
   if (q) items = items.filter(v => (v.chassis||'').includes(q)||(v.model||'').toUpperCase().includes(q)||(v.colour||'').toUpperCase().includes(q)||(v.variant||'').toUpperCase().includes(q)||(v.suffix||'').toUpperCase().includes(q));
   document.getElementById('stockCount').textContent = `${items.length} vehicle${items.length!==1?'s':''} found`;
   if (!items.length) { document.getElementById('stockList').innerHTML = '<div class="empty-state"><div class="e-icon">🔍</div><div class="e-text">No vehicles found</div></div>'; return; }
-  const canMove = currentUser && ['owner','manager'].includes(currentUser.role.toLowerCase());
+  const canMove = canMoveVehicle();
   document.getElementById('stockList').innerHTML = items.map(v => {
     const loc  = v.status==='In Transit'?'In Transit':(v.location||'Unknown');
     const pill = loc==='In Transit'?'transit':loc.toLowerCase().replace(' ','');
@@ -1572,15 +1547,13 @@ function renderStock() {
     const moveBtn = canMove && v.status !== 'In Transit'
       ? `<button class="move-btn" style="margin-top:8px;width:100%" onclick="moveFromStock('${v.chassis}',event)">🚗 Move Vehicle</button>`
       : '';
-    const _canSeeAlloc = canSeeAllocation();
-    const _allocBadge   = _canSeeAlloc ? (v.allocatedTo ? `<span class="loc-pill pill-allocated" style="margin-left:6px">Allocated</span>` : `<span class="loc-pill pill-available" style="margin-left:6px">Available</span>`) : '';
     return `<div class="chassis-row" onclick="showChassisDetail('${v.chassis}')">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div class="cr-model">${v.model} ${v.variant} <span style="color:var(--red);font-size:11px">${v.suffix||''}</span></div>
         ${v.days?`<span style="font-size:10px;color:${daysColor};font-weight:700">${v.days}d</span>`:''}
       </div>
       <div class="cr-chassis">${v.chassis}</div>
-      <div class="cr-loc"><span class="loc-pill pill-${pill}">${loc}</span>${_allocBadge}
+      <div class="cr-loc"><span class="loc-pill pill-${pill}">${loc}</span>${canSeeAllocation() ? (v.allocatedTo ? '<span class="loc-pill pill-allocated" style="margin-left:5px">Allocated</span>' : '<span class="loc-pill pill-available" style="margin-left:5px">Available</span>') : ''}
         <span style="font-size:10px;color:#aaa;margin-left:6px">${v.colour||''} ${v.fuel?'| '+v.fuel:''}</span></div>
       ${moveBtn}
     </div>`;
@@ -1619,76 +1592,6 @@ async function showChassisDetail(chassis) {
 function closeChassisDetail() { document.getElementById('chassisDetailOverlay').classList.remove('show'); }
 
 // ── API HELPERS ───────────────────────────────────────────────────
-
-// ════════════════════════════════════════════════════════════════
-// ALLOCATION SYSTEM
-// ════════════════════════════════════════════════════════════════
-function showVehicleAllocation(v) {
-  const card=document.getElementById('allocCard');
-  const disp=document.getElementById('allocStatusDisplay');
-  const btn =document.getElementById('allocBtn');
-  if(!card) return;
-  if(!canSeeAllocation()){card.style.display='none';return;}
-  card.style.display='block';
-  const s=allStock.find(x=>x.chassis===v.chassis);
-  if(s){v.allocatedTo=s.allocatedTo||'';v.allocBookingRef=s.allocBookingRef||'';v.allocDeliveryDate=s.allocDeliveryDate||'';}
-  if(v.allocatedTo&&v.allocatedTo.trim()){
-    disp.innerHTML='<div class="alloc-badge"><div><div class="alloc-badge-label">Allocated To</div>'+
-      '<div style="font-size:15px;font-weight:800;color:#92400E">'+v.allocatedTo+'</div>'+
-      (v.allocBookingRef?'<div style="font-size:11px;color:#92400E;margin-top:2px">Ref: '+v.allocBookingRef+'</div>':'')+
-      (v.allocDeliveryDate?'<div style="font-size:11px;color:#92400E;margin-top:1px">Expected: '+v.allocDeliveryDate+'</div>':'')+
-      '</div>'+(canAllocate()?'<button class="dealloc-btn" onclick="confirmDeallocation()">Remove</button>':'')+
-      '</div>';
-    if(btn){btn.textContent=canAllocate()?'Update Allocation':'';btn.style.display=canAllocate()?'flex':'none';}
-  } else {
-    disp.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:8px 0">'+
-      '<span class="loc-pill pill-available" style="font-size:11px;padding:4px 12px">Available</span>'+
-      '<span style="font-size:12px;color:var(--gray-400)">Not allocated</span></div>';
-    if(btn){btn.textContent='Allocate to Customer';btn.style.display=canAllocate()?'flex':'none';}
-  }
-}
-function openAllocModal(){
-  if(!vehicle)return;
-  document.getElementById('allocOverlay').classList.add('show');
-  document.getElementById('allocTitle').textContent='Allocate Vehicle';
-  document.getElementById('allocVehicleModel').textContent=vehicle.model+' '+vehicle.variant;
-  document.getElementById('allocVehicleVariant').textContent=(vehicle.colour||'')+' | '+(vehicle.suffix||'');
-  document.getElementById('allocVehicleChassis').textContent=vehicle.chassis;
-  document.getElementById('allocCustomerName').value=vehicle.allocatedTo||'';
-  document.getElementById('allocBookingRef').value=vehicle.allocBookingRef||'';
-  document.getElementById('allocDeliveryDate').value=vehicle.allocDeliveryDate||'';
-  document.getElementById('allocRemarks').value='';
-  document.getElementById('allocError').innerHTML='';
-  document.getElementById('allocDeliveryDate').min=new Date().toISOString().split('T')[0];
-}
-function closeAllocModal(){document.getElementById('allocOverlay').classList.remove('show');}
-async function confirmAllocation(){
-  const cn=document.getElementById('allocCustomerName').value.trim();
-  const br=document.getElementById('allocBookingRef').value.trim();
-  const dd=document.getElementById('allocDeliveryDate').value;
-  if(!cn){showErr('allocError','Customer name required.');return;}
-  if(!dd){showErr('allocError','Expected delivery date required.');return;}
-  clearErr('allocError');closeAllocModal();showLoader('Allocating...');
-  try{
-    await postAPIWithQueue({action:'allocateVehicle',chassis:vehicle.chassis,allocatedTo:cn,
-      allocBookingRef:br,allocDeliveryDate:dd,allocRemarks:document.getElementById('allocRemarks').value.trim(),
-      allocatedBy:currentUser?currentUser.name:'',timestamp:new Date().toISOString()});
-    vehicle.allocatedTo=cn;vehicle.allocBookingRef=br;vehicle.allocDeliveryDate=dd;
-    const i=allStock.findIndex(v=>v.chassis===vehicle.chassis);if(i>=0)Object.assign(allStock[i],vehicle);
-    hideLoader();showVehicleAllocation(vehicle);
-  }catch(e){hideLoader();alert('Allocation failed.');}
-}
-async function confirmDeallocation(){
-  if(!vehicle||!confirm('Remove allocation for '+vehicle.model+'?'))return;
-  showLoader('Removing...');
-  try{
-    await postAPIWithQueue({action:'deallocateVehicle',chassis:vehicle.chassis,
-      deallocBy:currentUser?currentUser.name:'',timestamp:new Date().toISOString()});
-    vehicle.allocatedTo='';vehicle.allocBookingRef='';vehicle.allocDeliveryDate='';
-    const i=allStock.findIndex(v=>v.chassis===vehicle.chassis);if(i>=0)Object.assign(allStock[i],vehicle);
-    hideLoader();showVehicleAllocation(vehicle);
-  }catch(e){hideLoader();alert('De-allocation failed.');}
-}
 async function postAPI(payload) {
   const res  = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload) });
   const data = JSON.parse(await res.text());
@@ -1765,10 +1668,7 @@ function renderNameList(list) {
     el.innerHTML = '<div style="padding:12px;text-align:center;color:#aaa;font-size:13px">No staff found</div>';
     return;
   }
-  const roleColors = {
-    'owner':'#FFD700','sales manager':'#3B82F6','service manager':'#10B981',
-    'edp':'#8B5CF6','sales team leader':'#F59E0B','yard staff':'#28A745'
-  };
+  const roleColors = { owner:'#FFD700', manager:'#17A2B8', 'yard staff':'#28A745' };
   el.innerHTML = list.map(s => {
     const rc = roleColors[s.role.toLowerCase()] || '#888';
     return `<div class="name-option" onclick="selectName('${s.name}','${s.role}')">
@@ -1824,8 +1724,7 @@ document.addEventListener('click', function(e) {
 function openProfileMenu() {
   document.getElementById('profileMenuName').textContent = currentUser.name;
   document.getElementById('profileMenuRole').textContent = currentUser.role.toUpperCase() + ' — Planet Toyota';
-  const isOwner = currentUser.role.toLowerCase() === 'owner';
-  document.getElementById('staffMgmtBtn').style.display = isOwner ? 'flex' : 'none';
+  document.getElementById('staffMgmtBtn').style.display = canManageStaff() ? 'flex' : 'none';
   document.getElementById('profileMenuOverlay').classList.add('show');
 }
 function closeProfileMenu() { document.getElementById('profileMenuOverlay').classList.remove('show'); }
@@ -1858,10 +1757,7 @@ async function refreshStaffList() {
       return;
     }
 
-    const roleColors = {
-    'owner':'#FFD700','sales manager':'#3B82F6','service manager':'#10B981',
-    'edp':'#8B5CF6','sales team leader':'#F59E0B','yard staff':'#28A745'
-  };
+    const roleColors = { owner:'#FFD700', manager:'#17A2B8', 'yard staff':'#28A745' };
     const avatarColors = ['#EB0A1E','#1A1A2E','#28A745','#17A2B8','#FF6B35','#6F42C1'];
 
     el.innerHTML = allStaffData.map((s, idx) => {
@@ -2409,7 +2305,7 @@ function closeShiftSummary() { document.getElementById('shiftOverlay').classList
 
 // ── LOCATION DRILL-DOWN ──────────────────────────────────────────
 function openLocDrill(loc) {
-  const canMove = currentUser && ['owner','manager'].includes(currentUser.role.toLowerCase());
+  const canMove = canMoveVehicle();
   const icons   = { ALL:'📦', Stockyard:'🅿️', Workshop:'🔧', Showroom:'🏢', 'In Transit':'🚚' };
   document.getElementById('locDrillOverlay').classList.add('show');
 
@@ -2491,6 +2387,142 @@ document.getElementById('profileMenuOverlay').addEventListener('click', function
 document.getElementById('staffPanelOverlay').addEventListener('click', function(e) { if(e.target===this) closeStaffPanel(); });
 document.getElementById('soldOverlay').addEventListener('click', function(e) { if(e.target===this) closeSoldModal(); });
 document.getElementById('shiftOverlay').addEventListener('click', function(e) { if(e.target===this) closeShiftSummary(); });
+
+// ════════════════════════════════════════════════════════════════
+// ALLOCATION SYSTEM
+// ════════════════════════════════════════════════════════════════
+function showVehicleAllocation(v) {
+  const card = document.getElementById('allocCard');
+  const disp = document.getElementById('allocStatusDisplay');
+  const btn  = document.getElementById('allocBtn');
+  if (!card || !disp || !btn) return;
+  if (!canSeeAllocation()) { card.style.display='none'; return; }
+  card.style.display = 'block';
+  const sv = allStock ? allStock.find(x => x.chassis === v.chassis) : null;
+  if (sv) { v.allocatedTo=sv.allocatedTo||''; v.allocBookingRef=sv.allocBookingRef||''; v.allocDeliveryDate=sv.allocDeliveryDate||''; }
+  if (v.allocatedTo && v.allocatedTo.trim()) {
+    disp.innerHTML =
+      '<div class="alloc-badge">' +
+        '<div><div style="font-size:10px;color:#92400E;opacity:0.7;text-transform:uppercase">Allocated To</div>' +
+        '<div style="font-size:16px;font-weight:800;color:#92400E;margin-top:2px">' + v.allocatedTo + '</div>' +
+        (v.allocBookingRef ? '<div style="font-size:11px;color:#92400E;margin-top:3px">Ref: ' + v.allocBookingRef + '</div>' : '') +
+        (v.allocDeliveryDate ? '<div style="font-size:11px;color:#92400E;margin-top:2px">Expected: ' + v.allocDeliveryDate + '</div>' : '') +
+        '</div>' + (canAllocate() ? '<button class="dealloc-btn" onclick="confirmDeallocation()">Remove</button>' : '') +
+      '</div>';
+    btn.textContent='Update Allocation'; btn.style.display=canAllocate()?'flex':'none';
+  } else {
+    disp.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding:6px 0">'+
+      '<span class="loc-pill pill-available" style="font-size:11px;padding:4px 12px">Available</span>'+
+      '<span style="font-size:12px;color:#9CA3AF">Not allocated to any customer</span></div>';
+    btn.textContent='Allocate to Customer'; btn.style.display=canAllocate()?'flex':'none';
+  }
+}
+function openAllocModal() {
+  if (!vehicle) return;
+  document.getElementById('allocOverlay').classList.add('show');
+  document.getElementById('allocTitle').textContent=vehicle.allocatedTo?'Update Allocation':'Allocate Vehicle';
+  document.getElementById('allocVehicleModel').textContent=vehicle.model+' '+vehicle.variant;
+  document.getElementById('allocVehicleVariant').textContent=(vehicle.colour||'')+' | '+(vehicle.suffix||'');
+  document.getElementById('allocVehicleChassis').textContent=vehicle.chassis;
+  document.getElementById('allocCustomerName').value=vehicle.allocatedTo||'';
+  document.getElementById('allocBookingRef').value=vehicle.allocBookingRef||'';
+  document.getElementById('allocDeliveryDate').value=vehicle.allocDeliveryDate||'';
+  document.getElementById('allocRemarks').value='';
+  document.getElementById('allocError').innerHTML='';
+  document.getElementById('allocDeliveryDate').min=new Date().toISOString().split('T')[0];
+}
+function closeAllocModal(){document.getElementById('allocOverlay').classList.remove('show');}
+async function confirmAllocation(){
+  const cn=document.getElementById('allocCustomerName').value.trim();
+  const br=document.getElementById('allocBookingRef').value.trim();
+  const dd=document.getElementById('allocDeliveryDate').value;
+  if(!cn){showErr('allocError','Customer name required.');return;}
+  if(!dd){showErr('allocError','Expected delivery date required.');return;}
+  clearErr('allocError'); closeAllocModal(); showLoader('Allocating...');
+  try {
+    await postAPIWithQueue({action:'allocateVehicle',chassis:vehicle.chassis,allocatedTo:cn,
+      allocBookingRef:br,allocDeliveryDate:dd,allocRemarks:document.getElementById('allocRemarks').value.trim(),
+      allocatedBy:currentUser?currentUser.name:'',timestamp:new Date().toISOString()});
+    vehicle.allocatedTo=cn; vehicle.allocBookingRef=br; vehicle.allocDeliveryDate=dd;
+    const i=allStock?allStock.findIndex(v=>v.chassis===vehicle.chassis):-1;
+    if(i>=0){allStock[i].allocatedTo=cn;allStock[i].allocBookingRef=br;allStock[i].allocDeliveryDate=dd;}
+    hideLoader(); showVehicleAllocation(vehicle);
+  } catch(e){hideLoader();alert('Allocation failed.');}
+}
+async function confirmDeallocation(){
+  if(!vehicle||!confirm('Remove allocation for '+vehicle.model+'?'))return;
+  showLoader('Removing...');
+  try {
+    await postAPIWithQueue({action:'deallocateVehicle',chassis:vehicle.chassis,
+      deallocBy:currentUser?currentUser.name:'',timestamp:new Date().toISOString()});
+    vehicle.allocatedTo=''; vehicle.allocBookingRef=''; vehicle.allocDeliveryDate='';
+    const i=allStock?allStock.findIndex(v=>v.chassis===vehicle.chassis):-1;
+    if(i>=0){allStock[i].allocatedTo='';allStock[i].allocBookingRef='';allStock[i].allocDeliveryDate='';}
+    hideLoader(); showVehicleAllocation(vehicle);
+  } catch(e){hideLoader();alert('De-allocation failed.');}
+}
+
+// ════════════════════════════════════════════════════════════════
+// TKM BILLED
+// ════════════════════════════════════════════════════════════════
+function openTKMBilledSheet(){
+  document.getElementById('tkmBilledOverlay').classList.add('show');
+  const tkmV=allStock?allStock.filter(v=>v.status==='TKM Billed'):[];
+  const el=document.getElementById('tkmBilledList');
+  if(!tkmV.length){el.innerHTML='<div class="empty-state"><div class="e-icon">✅</div><div class="e-text">No pending TKM vehicles</div></div>';return;}
+  el.innerHTML=tkmV.map(v=>'<div class="tkm-item"><div class="tkm-item-model">'+v.model+' '+v.variant+(v.suffix?' <span style="color:#7C3AED;font-size:11px">'+v.suffix+'</span>':'')+'</div><div class="tkm-item-detail">'+(v.colour||'')+(v.fuel?' | '+v.fuel:'')+'</div><div class="tkm-item-chassis">'+v.chassis+'</div><div class="tkm-item-days">Billed '+(v.days||0)+' days ago</div></div>').join('');
+}
+function closeTKMBilledSheet(){document.getElementById('tkmBilledOverlay').classList.remove('show');}
+
+function openTKMBilledEntry(){
+  if(!canEnterTKMBilled())return;
+  document.getElementById('tkmBilledEntryOverlay').classList.add('show');
+  document.getElementById('tbChassis').value='';
+  document.getElementById('tbInvoiceNo').value='';
+  document.getElementById('tbBillingDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('tbError').innerHTML='';
+  const models=[...new Set(suffixes.map(r=>r.model))].sort();
+  document.getElementById('tbModel').innerHTML='<option value="">— Select Model —</option>'+models.map(m=>'<option>'+m+'</option>').join('');
+  ['tbVariant','tbFuel','tbColour','tbInterior'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML='<option value="">—</option>';});
+  document.getElementById('tbSuffix').value='';
+}
+function closeTKMBilledEntry(){document.getElementById('tkmBilledEntryOverlay').classList.remove('show');}
+function tbDD(next){
+  const m=document.getElementById('tbModel').value;
+  const v=document.getElementById('tbVariant')?document.getElementById('tbVariant').value:'';
+  const f=document.getElementById('tbFuel')?document.getElementById('tbFuel').value:'';
+  const c=document.getElementById('tbColour')?document.getElementById('tbColour').value:'';
+  if(next==='Suffix'){
+    const i=document.getElementById('tbInterior').value;
+    const match=suffixes.find(r=>r.model===m&&r.variant===v&&r.fuel===f&&r.colour===c&&(r.interior===i||(!r.interior&&i==='(None)')));
+    const inp=document.getElementById('tbSuffix');
+    inp.value=match?match.suffix:'— Not found —'; inp.style.borderColor=match?'var(--green)':'var(--red)'; return;
+  }
+  const filters={Variant:r=>r.model===m, Fuel:r=>r.model===m&&r.variant===v, Colour:r=>r.model===m&&r.variant===v&&r.fuel===f, Interior:r=>r.model===m&&r.variant===v&&r.fuel===f&&r.colour===c};
+  const key=next.toLowerCase();
+  const opts=[...new Set(suffixes.filter(filters[next]).map(r=>r[key]||'(None)'))].sort();
+  const el=document.getElementById('tb'+next);
+  if(el) el.innerHTML='<option value="">— '+next+' —</option>'+opts.map(o=>'<option>'+o+'</option>').join('');
+  document.getElementById('tbSuffix').value='';
+}
+async function confirmTKMBilledEntry(){
+  const chassis=document.getElementById('tbChassis').value.trim().toUpperCase();
+  const model=document.getElementById('tbModel').value,variant=document.getElementById('tbVariant').value;
+  const fuel=document.getElementById('tbFuel').value,colour=document.getElementById('tbColour').value;
+  const interior=document.getElementById('tbInterior').value,suffix=document.getElementById('tbSuffix').value;
+  const billingDate=document.getElementById('tbBillingDate').value,invoiceNo=document.getElementById('tbInvoiceNo').value.trim();
+  if(!chassis){showErr('tbError','Chassis required.');return;}
+  if(!model||!variant||!fuel||!colour||!interior){showErr('tbError','Fill all fields.');return;}
+  if(!billingDate){showErr('tbError','Billing date required.');return;}
+  closeTKMBilledEntry(); showLoader('Registering...');
+  try{
+    await postAPIWithQueue({action:'addTKMBilled',chassis,model,variant,fuel,colour,interior,suffix,billingDate,invoiceNo,billedBy:currentUser?currentUser.name:'',timestamp:new Date().toISOString()});
+    hideLoader();
+    showSuccess('📋','TKM Billed Registered','Vehicle added to pending list.',[
+      {k:'Chassis',v:chassis},{k:'Model',v:model+' '+variant},{k:'Colour',v:colour},{k:'Invoice',v:invoiceNo||'—'}]);
+  }catch(e){hideLoader();alert('Failed.');}
+}
+
 </script>
 
 
@@ -2671,7 +2703,7 @@ document.getElementById('shiftOverlay').addEventListener('click', function(e) { 
       <div class="v-chassis" id="allocVehicleChassis">—</div>
     </div>
     <div class="input-group"><label class="input-label">Customer Name *</label><input class="input-field" id="allocCustomerName" type="text" placeholder="Full name"></div>
-    <div class="input-group"><label class="input-label">Booking Ref</label><input class="input-field" id="allocBookingRef" type="text" placeholder="Booking number (optional)"></div>
+    <div class="input-group"><label class="input-label">Booking Ref</label><input class="input-field" id="allocBookingRef" type="text" placeholder="Optional"></div>
     <div class="input-group"><label class="input-label">Expected Delivery Date *</label><input class="input-field" id="allocDeliveryDate" type="date"></div>
     <div class="input-group"><label class="input-label">Remarks</label><input class="input-field" id="allocRemarks" type="text" placeholder="Finance, exchange..."></div>
     <div id="allocError" style="margin-bottom:10px"></div>
@@ -2682,7 +2714,7 @@ document.getElementById('shiftOverlay').addEventListener('click', function(e) { 
   </div>
 </div>
 
-<!-- ══ TKM BILLED MODAL ══ -->
+<!-- ══ TKM BILLED LIST ══ -->
 <div class="modal-overlay" id="tkmBilledOverlay">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -2690,31 +2722,30 @@ document.getElementById('shiftOverlay').addEventListener('click', function(e) { 
       <div class="modal-title" style="margin:0">TKM Billed — Not Arrived</div>
       <button onclick="closeTKMBilledSheet()" style="background:var(--gray-100);border:none;width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer">✕</button>
     </div>
-    <div class="alert alert-info" style="margin-bottom:14px">Vehicles billed by TKM but not yet arrived.</div>
+    <div class="alert alert-info" style="margin-bottom:14px">Vehicles billed by TKM not yet arrived.</div>
     <div id="tkmBilledList"></div>
     <button class="btn btn-gray mt-10" onclick="closeTKMBilledSheet()">Close</button>
   </div>
 </div>
 
-<!-- ══ TKM BILLED ENTRY MODAL ══ -->
+<!-- ══ TKM BILLED ENTRY ══ -->
 <div class="modal-overlay" id="tkmBilledEntryOverlay">
   <div class="modal" style="max-height:88vh;overflow-y:auto">
     <div class="modal-handle"></div>
     <div class="modal-title">📋 Register TKM Billed Vehicle</div>
     <div class="input-group"><label class="input-label">Chassis No. *</label>
-      <input class="input-field" id="tbChassis" type="text" placeholder="Enter chassis number"
+      <input class="input-field" id="tbChassis" type="text" placeholder="Enter chassis"
         style="text-transform:uppercase;letter-spacing:1px"
-        oninput="this.value=this.value.toUpperCase();validateChassisFormat('tbChassis','tbChassisErr')">
-      <div id="tbChassisErr" style="font-size:11px;color:var(--red);margin-top:4px"></div>
+        oninput="this.value=this.value.toUpperCase()">
     </div>
-    <div class="input-group"><label class="input-label">Model *</label><select class="input-field" id="tbModel" onchange="tbDDVariant()"><option value="">— Select Model —</option></select></div>
-    <div class="input-group"><label class="input-label">Variant *</label><select class="input-field" id="tbVariant" onchange="tbDDFuel()"><option value="">—</option></select></div>
-    <div class="input-group"><label class="input-label">Fuel Type *</label><select class="input-field" id="tbFuel" onchange="tbDDColour()"><option value="">—</option></select></div>
-    <div class="input-group"><label class="input-label">Colour *</label><select class="input-field" id="tbColour" onchange="tbDDInterior()"><option value="">—</option></select></div>
-    <div class="input-group"><label class="input-label">Interior *</label><select class="input-field" id="tbInterior" onchange="tbDDSuffix()"><option value="">—</option></select></div>
-    <div class="input-group"><label class="input-label">Suffix Code (auto)</label><input class="input-field ok" id="tbSuffix" readonly></div>
+    <div class="input-group"><label class="input-label">Model *</label><select class="input-field" id="tbModel" onchange="tbDD('Variant')"><option value="">— Select Model —</option></select></div>
+    <div class="input-group"><label class="input-label">Variant *</label><select class="input-field" id="tbVariant" onchange="tbDD('Fuel')"><option value="">—</option></select></div>
+    <div class="input-group"><label class="input-label">Fuel *</label><select class="input-field" id="tbFuel" onchange="tbDD('Colour')"><option value="">—</option></select></div>
+    <div class="input-group"><label class="input-label">Colour *</label><select class="input-field" id="tbColour" onchange="tbDD('Interior')"><option value="">—</option></select></div>
+    <div class="input-group"><label class="input-label">Interior *</label><select class="input-field" id="tbInterior" onchange="tbDD('Suffix')"><option value="">—</option></select></div>
+    <div class="input-group"><label class="input-label">Suffix (auto)</label><input class="input-field ok" id="tbSuffix" readonly></div>
     <div class="input-group"><label class="input-label">Billing Date *</label><input class="input-field" id="tbBillingDate" type="date"></div>
-    <div class="input-group"><label class="input-label">TKM Invoice No.</label><input class="input-field" id="tbInvoiceNo" type="text" placeholder="e.g. TKM/2026/12345"></div>
+    <div class="input-group"><label class="input-label">Invoice No.</label><input class="input-field" id="tbInvoiceNo" type="text" placeholder="e.g. TKM/2026/12345"></div>
     <div id="tbError" style="margin-bottom:10px"></div>
     <div class="gap-10">
       <button class="btn btn-gray" style="flex:1" onclick="closeTKMBilledEntry()">Cancel</button>
@@ -2723,7 +2754,7 @@ document.getElementById('shiftOverlay').addEventListener('click', function(e) { 
   </div>
 </div>
 
-<!-- ══ STAFF MANAGEMENT PANEL ══ -->
+<!-- ══ STAFF PANEL ══ -->
 <div class="staff-panel-overlay" id="staffPanelOverlay">
   <div class="staff-panel">
     <div class="staff-panel-header">
@@ -2731,7 +2762,7 @@ document.getElementById('shiftOverlay').addEventListener('click', function(e) { 
       <button class="staff-panel-close" onclick="closeStaffPanel()">✕</button>
     </div>
     <div class="staff-panel-body">
-      <div class="staff-form" id="staffForm">
+      <div class="staff-form">
         <h3 id="staffFormTitle">➕ Add New Staff</h3>
         <input class="sf-input" id="sfName" type="text" placeholder="Full Name *">
         <select class="sf-select" id="sfRole">
@@ -2745,15 +2776,15 @@ document.getElementById('shiftOverlay').addEventListener('click', function(e) { 
         </select>
         <input class="sf-input" id="sfPin" type="tel" placeholder="4-digit PIN *" maxlength="4"
           oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
+        <input type="hidden" id="sfEditRow" value="">
         <div class="sf-err" id="sfErr"></div>
         <div class="sf-ok"  id="sfOk"></div>
-        <input type="hidden" id="sfEditRow" value="">
         <div class="sf-row">
           <button class="btn btn-green" style="flex:2" onclick="saveStaff()">✅ Save</button>
           <button class="btn btn-gray"  style="flex:1" onclick="resetStaffForm()">Clear</button>
         </div>
       </div>
-      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">Current Staff</div>
+      <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;margin-top:4px">Current Staff</div>
       <div id="staffList"><div class="empty-state"><div class="e-icon">🔄</div><div class="e-text">Loading...</div></div></div>
     </div>
   </div>
@@ -2766,7 +2797,7 @@ document.getElementById('shiftOverlay').addEventListener('click', function(e) { 
     <div class="modal-title" id="profileMenuName">Profile</div>
     <div style="margin-bottom:16px"><div style="font-size:12px;color:#888" id="profileMenuRole"></div></div>
     <button class="btn btn-outline" style="margin-bottom:10px" onclick="closeProfileMenu();openChangePIN()">🔑 Change My PIN</button>
-    <button class="btn btn-blue"   style="margin-bottom:10px" onclick="closeProfileMenu();openShiftSummary()">📋 My Shift Summary</button>
+    <button class="btn btn-blue"   style="margin-bottom:10px" onclick="closeProfileMenu();openShiftSummary()">📋 Shift Summary</button>
     <button class="btn btn-dark"   id="staffMgmtBtn" style="margin-bottom:10px;display:none" onclick="closeProfileMenu();openStaffPanel()">👥 Manage Staff</button>
     <button class="btn btn-gray"   onclick="closeProfileMenu()">Close</button>
   </div>
